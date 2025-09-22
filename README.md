@@ -1,2 +1,2 @@
 # QSA-TEAM-PTC
-Repository ini berisi proyek Teknologi Cerdas dengan judul “Sistem Presensi Digital SmartSchool dengan Integrasi Kartu RFID”. Aplikasi ini dirancang untuk mencatat kehadiran siswa secara otomatis, efisien, dan akurat melalui kartu RFID.
+Repository ini berisi proyek Teknologi Cerdas dengan judul “Sistem Presensi Digital SmartSchool dengan Integrasi Kartu RFID”. Aplikasi ini dirancang  untuk mengelola dan memantau kehadiran siswa di lingkungan sekolah secara otomatis, aman, dan efisien. Sistem ini mengintegrasikan teknologi aplikasi berbasis web (SE), Internet of Things (IoT), serta sistem cerdas (SC), sehingga mampu mencatat kehadiran siswa secara real-time dengan kombinasi kartu RFID untuk guru dan sidik jari untuk siswa.
