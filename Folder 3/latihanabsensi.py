@@ -41,10 +41,11 @@ df = pd.DataFrame({
     "Tanggal Proses": tanggal_proses
 })
 
-pd.set_option("display.colheader_justify", "center")  # Header rata tengah
-pd.set_option("display.width", 1000)  # Lebar tabel
-pd.set_option("display.max_columns", None)  # Tampilkan semua kolom
+pd.set_option("display.colheader_justify", "center") 
+pd.set_option("display.width", 1000) 
+pd.set_option("display.max_columns", None)  
 
 print("\n=== Hasil Klasifikasi KNN Absensi Siswa ===\n")
 print(df.to_string(index=False))
+
 
