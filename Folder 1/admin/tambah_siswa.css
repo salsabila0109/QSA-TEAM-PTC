@@ -1,0 +1,112 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #F5F5F5;
+    color: #333;
+}
+
+
+header {
+    background: #00796B;  
+    color: #fff;
+    padding: 15px 20px;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 1px;
+    border-bottom: 4px solid #004D40;
+}
+
+
+.container {
+    width: 95%;
+    max-width: 600px;
+    margin: 25px auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin: 10px 0 5px;
+    color: #004D40;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+
+.btn-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-submit {
+    background: #009688;   /* hijau */
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+}
+
+.btn-submit:hover {
+    background: #00796B;
+}
+
+.btn-back {
+    background: #9E9E9E;   
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+}
+
+.btn-back:hover {
+    background: #616161;
+}
+
+.btn-tambah-siswa {
+    background: #177df1;  
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+    text-decoration: none; 
+    display: inline-block;
+}
+
+.btn-tambah-siswa:hover {
+    background: #333333;  
+}
+
+
+@media (max-width: 600px) {
+    .btn-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

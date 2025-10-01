@@ -1,0 +1,80 @@
+
+.dashboard-container {
+    width: 95%;
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 20px;
+    background-color: #E0F2F1; 
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+
+.dashboard-container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #004D40; /* teks gelap */
+}
+
+
+.dashboard-container label {
+    font-weight: bold;
+    margin-right: 10px;
+    color: #004D40;
+}
+
+#kelasSelect {
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid #009688;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table th, table td {
+    border: 1px solid #009688;
+    padding: 10px;
+    text-align: center;
+}
+
+table th {
+    background-color: #009688; 
+    color: #E0F2F1; 
+}
+
+table tr:nth-child(even) {
+    background-color: #E0F2F1; 
+}
+
+table tr:hover {
+    background-color: #004D40; 
+    color: #E0F2F1; 
+}
+
+
+.dashboard-container p {
+    text-align: center;
+    font-style: italic;
+    margin-top: 15px;
+    color: #004D40;
+}
+
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 10px;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}

@@ -1,0 +1,22 @@
+<?php
+session_start();
+
+
+if (!isset($_SESSION['role_pengguna']) || $_SESSION['role_pengguna'] != 'guru') {
+    header("Location: ../login.php");
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Guru</title>
+    <link rel="stylesheet" href="../style.css"> 
+</head>
+<body>
+<div class="dashboard-container">
+    <h2>Selamat datang Guru, <?= htmlspecialchars($_SESSION['username']); ?>!</h2>
+    <a href="../logout.php">Logout</a>
+</div>
+</body>
+</html>

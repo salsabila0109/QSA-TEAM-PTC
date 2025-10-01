@@ -1,0 +1,87 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f4f6f8;
+    color: #333;
+}
+
+
+.container {
+    max-width: 500px;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+
+.container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #004D40;
+}
+
+form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #004D40;
+}
+
+form input[type="text"],
+form select {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+form input[type="text"]:focus,
+form select:focus {
+    border-color: #009688;
+    outline: none;
+}
+
+
+.btn-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+
+.btn-submit {
+    background-color: #009688;
+    color: #fff;
+}
+
+.btn-submit:hover {
+    background-color: #00796B;
+}
+
+/* Back Button */
+.btn-back {
+    background-color: #ccc;
+    color: #333;
+}
+
+.btn-back:hover {
+    background-color: #b0b0b0;
+}
