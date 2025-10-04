@@ -1,0 +1,92 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #E0F2F1;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 500px;
+    width: 90%;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 25px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+form input[type="text"], form select {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* Tombol simpan di tengah */
+.form-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Tombol simpan */
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    background-color: #27ae60;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background-color: #1e8449;
+}
+
+/* Icon tombol */
+.btn i {
+    margin-right: 5px;
+}
+
+/* Pesan berhasil/gagal */
+.message {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #dff0d8;
+    color: #3c763d;
+    border-radius: 5px;
+    text-align: center;
+}
+
+/* Responsive HP */
+@media (max-width: 480px) {
+    .container {
+        padding: 20px 15px;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}

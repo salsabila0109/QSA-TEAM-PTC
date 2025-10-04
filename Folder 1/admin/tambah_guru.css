@@ -1,0 +1,140 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #E0F7FA;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    max-width: 800px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+h2, h3 {
+    text-align: center;
+    color: #00796B;
+}
+
+.message {
+    text-align: center;
+    color: #2E7D32;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.form-tambah {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #B2DFDB;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.btn-center {
+    grid-column: span 2;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.btn-submit {
+    background-color: #00796B;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+.btn-submit i {
+    margin-right: 6px;
+}
+
+.btn-submit:hover {
+    background-color: #004D40;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+table th, table td {
+    border: 1px solid #B2DFDB;
+    padding: 10px;
+    text-align: center;
+}
+
+table th {
+    background-color: #00796B;
+    color: white;
+}
+
+table tr:nth-child(even) {
+    background-color: #F1F8E9;
+}
+
+.aksi a {
+    text-decoration: none;
+    color: #E53935;
+    font-size: 18px;
+    padding: 5px 8px;
+}
+
+.aksi a:hover {
+    color: #B71C1C;
+}
+
+.empty {
+    text-align: center;
+    color: #757575;
+    font-style: italic;
+}
+
+.back-container {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.btn-back {
+    background-color: #00a1e6e5;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-back i {
+    margin-right: 6px;
+}
+
+.btn-back:hover {
+    background-color: #00538f;
+}

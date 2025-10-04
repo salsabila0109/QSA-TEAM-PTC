@@ -1,0 +1,65 @@
+/* Reset & Base */
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: Arial, sans-serif; background:#f5f5f5; color:#333; }
+
+/* Container */
+.container {
+    width: 90%;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #E0F2F1;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Judul */
+.container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #004D40;
+}
+
+/* Form */
+form { display: flex; flex-direction: column; gap: 15px; }
+
+/* Label & Input */
+label { font-weight: bold; color: #004D40; }
+input[type="text"] {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+/* Tombol Simpan */
+.btn-simpan {
+    background: #009688;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
+    transition: background 0.3s;
+}
+.btn-simpan:hover { background: #004D40; }
+
+/* Pesan sukses/error */
+.message {
+    text-align: center;
+    padding: 8px;
+    background: #a9d6df;
+    color: #004D40;
+    border-radius: 5px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .container { width: 95%; padding: 15px; }
+    input[type="text"] { font-size: 14px; }
+    .btn-simpan { font-size: 14px; padding: 8px; }
+}

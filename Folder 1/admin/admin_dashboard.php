@@ -2,216 +2,212 @@
 session_start();
 include '../db.php';
 
-if ($_SESSION['role_pengguna'] != 'admin') {
+// Cek apakah user admin
+if (!isset($_SESSION['role_pengguna']) || $_SESSION['role_pengguna'] != 'admin') {
     header("Location: ../login.php");
     exit;
 }
 
-
+// Ambil semua siswa
 $siswa = [];
 $result_siswa = $conn->query("SELECT * FROM siswa");
-while($row = $result_siswa->fetch_assoc()) {
+while ($row = $result_siswa->fetch_assoc()) {
     $siswa[] = $row;
 }
 $total_siswa = count($siswa);
 
 
+// Inisialisasi hitungan
 $hadir_hari_ini = 0;
 $izin_hari_ini = 0;
 $sakit_hari_ini = 0;
 $alpa_hari_ini = 0;
 
+$today = date('Y-m-d');
+
+// Hitung kehadiran dari absensi_siswa
 foreach ($siswa as $s) {
     $uid = $s['id_siswa'];
-    $today = date('Y-m-d');
-    $res = $conn->query("SELECT * FROM kehadiran WHERE id_siswa='$uid' AND tanggal='$today' LIMIT 1");
-    if($res->num_rows > 0){
+    $res = $conn->query("SELECT * FROM absensi_siswa WHERE id_siswa='$uid' AND DATE(waktu_absensi_tercatat)='$today' LIMIT 1");
+    if ($res && $res->num_rows > 0) {
         $row = $res->fetch_assoc();
-        switch($row['status']){
+        switch ($row['status']) {
             case 'Hadir': $hadir_hari_ini++; break;
             case 'Izin': $izin_hari_ini++; break;
             case 'Sakit': $sakit_hari_ini++; break;
             case 'Alpa': $alpa_hari_ini++; break;
         }
     } else {
-        $alpa_hari_ini++; // dianggap Alpa jika tidak ada record
+        $alpa_hari_ini++;
     }
 }
 
-$total_scan_hari_ini = $hadir_hari_ini + $izin_hari_ini + $sakit_hari_ini;
 $persen_hadir = $total_siswa > 0 ? round(($hadir_hari_ini/$total_siswa)*100) : 0;
 
-
-$pieData = [
-    'Hadir' => $hadir_hari_ini,
-    'Izin' => $izin_hari_ini,
-    'Sakit' => $sakit_hari_ini,
-    'Alpa' => $alpa_hari_ini
-];
+// Pie chart data
+$pieData = [$hadir_hari_ini,$izin_hari_ini,$sakit_hari_ini,$alpa_hari_ini];
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Beranda Admin</title>
-    <link rel="stylesheet" href="admin_dashboard.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<title>Beranda Admin</title>
+<link rel="stylesheet" href="dashboard_admin.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* Perbaikan bulat-bulat horizontal */
+.stats-grid-horizontal-wrapper {
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-top: 20px;
+}
+.stats-grid-horizontal {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 20px;
+}
+.stats-grid-horizontal .stat-card {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+/* Scrollbar rapi */
+.stats-grid-horizontal-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+.stats-grid-horizontal-wrapper::-webkit-scrollbar-thumb {
+    background: #009688;
+    border-radius: 4px;
+}
+.stats-grid-horizontal-wrapper::-webkit-scrollbar-track {
+    background: #e0f2f1;
+    border-radius: 4px;
+}
+</style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>Admin Panel</h2>
-    <a href="#" class="tablink active" onclick="openTab('dashboard')">Dashboard</a>
-    <a href="#" class="tablink" onclick="openTab('siswa')">Manajemen Data Siswa</a>
-    <a href="#" class="tablink" onclick="openTab('guru')">Manajemen Data Guru</a>
-    <a href="#" class="tablink" onclick="openTab('kelas')">Manajemen Kelas</a>
-    <a href="#" class="tablink" onclick="openTab('kehadiran')">Pemantauan Kehadiran</a>
-    <a href="#" class="tablink" onclick="openTab('notifikasi')">Notifikasi Kehadiran</a>
-    <a href="#" class="tablink" onclick="openTab('export')">Export Excel</a>
+    <a href="#" class="tablink active" onclick="openTab(event,'dashboard')">Dashboard</a>
+    <a href="#" class="tablink" onclick="openTab(event,'siswa')">Manajemen Data Siswa</a>
+    <a href="#" class="tablink" onclick="openTab(event,'guru')">Manajemen Data Guru</a>
+    <a href="#" class="tablink" onclick="openTab(event,'orangtua')">Manajemen Data Orangtua</a>
+    <a href="#" class="tablink" onclick="openTab(event,'kelas')">Manajemen Kelas</a>
+    <a href="#" class="tablink" onclick="openTab(event,'mapel')">Manajemen Data Mapel</a>
+    <a href="#" class="tablink" onclick="openTab(event,'kehadiran')">Pemantauan Kehadiran</a>
+    <a href="#" class="tablink" onclick="openTab(event,'notifikasi')">Notifikasi Kehadiran</a>
+    <a href="#" class="tablink" onclick="openTab(event,'profil')">Profil Admin</a>
     <a href="logout.php" onclick="return confirm('Apakah Anda yakin ingin logout?')">Logout</a>
-
 </div>
 
-<div class="main-content">
- 
 
+<div class="main-content">
+    <!-- Dashboard -->
     <div id="dashboard" class="tabcontent" style="display:block;">
         <h2>Selamat Datang Admin, <?php echo $_SESSION['username']; ?>! 👋</h2>
-        <p>Gunakan menu di sebelah kiri untuk mengelola data siswa, guru, kelas, memvalidasi data, melihat kehadiran, mengirim notifikasi, atau mengekspor laporan.</p>
+        <p>Pilih menu di sebelah kiri untuk mengelola data siswa, guru, orangtua, kelas, mata pelajaran, melihat kehadiran siswa, atau mengekspor laporan</p>
 
-      
-        <div class="stats-grid-horizontal">
-            <div class="stat-card">
-                <h3>Total Kehadiran</h3>
-                <div class="stat-number"><?php echo $persen_hadir; ?>%</div>
-                <div class="stat-change positive">+5% dari kemarin</div>
-            </div>
-            <div class="stat-card">
-                <h3>Hadir</h3>
-                <div class="stat-number"><?php echo $hadir_hari_ini.'/'.$total_siswa; ?></div>
-            </div>
-            <div class="stat-card">
-                <h3>Izin</h3>
-                <div class="stat-number"><?php echo $izin_hari_ini; ?></div>
-            </div>
-            <div class="stat-card">
-                <h3>Sakit</h3>
-                <div class="stat-number"><?php echo $sakit_hari_ini; ?></div>
-            </div>
-            <div class="stat-card">
-                <h3>Alpa</h3>
-                <div class="stat-number"><?php echo $alpa_hari_ini; ?></div>
+        <div class="stats-grid-horizontal-wrapper">
+            <div class="stats-grid-horizontal">
+                <div class="stat-card">
+                    <h3>Total Kehadiran</h3>
+                    <div class="stat-number"><?php echo $persen_hadir; ?>%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Hadir</h3>
+                    <div class="stat-number"><?php echo $hadir_hari_ini.'/'.$total_siswa; ?></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Izin</h3>
+                    <div class="stat-number"><?php echo $izin_hari_ini; ?></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Sakit</h3>
+                    <div class="stat-number"><?php echo $sakit_hari_ini; ?></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Alpa</h3>
+                    <div class="stat-number"><?php echo $alpa_hari_ini; ?></div>
+                </div>
             </div>
         </div>
 
-    
         <div style="width:250px; height:250px; margin:20px auto;">
             <canvas id="pieChart"></canvas>
         </div>
 
-        
-        <div class="chart-container">
-            <h3>Statistik Kehadiran Mingguan</h3>
-            <canvas id="attendanceChart"></canvas>
-        </div>
-
-    
         <div class="recent-activity">
             <h3>Aktivitas Absensi Terbaru</h3>
             <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse; text-align:center;">
                 <thead>
                     <tr>
-                        <th>Id_siswa</th>
+                        <th>ID Siswa</th>
                         <th>Nama Siswa</th>
                         <th>Jam</th>
                         <th>Status</th>
                     </tr>
                 </thead>
-                <tbody id="activityTableBody">
-                </tbody>
+                <tbody id="activityTableBody"></tbody>
             </table>
         </div>
     </div>
 
-    
-    <div id="siswa" class="tabcontent">
-        <?php include 'manajemen_data_siswa.php'; ?>
-    </div>
-
-    
-    <div id="guru" class="tabcontent">
-        <?php include 'manajemen_data_guru.php'; ?>
-    </div>
-
-    
-    <div id="kelas" class="tabcontent">
-        <?php include 'manajemen_data_kelas.php'; ?>
-    </div>
-
-    
-    <div id="kehadiran" class="tabcontent">
-        <?php include 'kehadiran.php'; ?>
-    </div>
-
-    
-    <div id="notifikasi" class="tabcontent">
-        <?php include 'notifikasi_kehadiran.php'; ?>
-    </div>
-
-    
-    <div id="export" class="tabcontent">
-        <a href="ekspor_excel.php" class="btn btn-export">Export ke Excel</a>
-    </div>
+    <!-- Tab Lain -->
+    <div id="siswa" class="tabcontent"><?php include 'manajemen_data_siswa.php'; ?></div>
+    <div id="guru" class="tabcontent"><?php include 'manajemen_data_guru.php'; ?></div>
+    <div id="orangtua" class="tabcontent"><?php include 'manajemen_data_orangtua.php'; ?></div>
+    <div id="kelas" class="tabcontent"><?php include 'manajemen_data_kelas.php'; ?></div>
+    <div id="mapel" class="tabcontent"><?php include 'manajemen_data_mapel.php'; ?></div>
+    <div id="kehadiran" class="tabcontent"><?php include 'kehadiran.php'; ?></div>
+    <div id="notifikasi" class="tabcontent"><?php include 'notifikasi_kehadiran.php'; ?></div>
+    <div id="profil" class="tabcontent"><?php include 'profil_admin.php'; ?></div>
 </div>
 
 <script>
-function openTab(tabName) {
+function openTab(evt, tabName) {
     var i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");
-    for(i=0;i<tabcontent.length;i++) tabcontent[i].style.display='none';
+    for (i=0;i<tabcontent.length;i++) tabcontent[i].style.display='none';
     tablinks = document.getElementsByClassName("tablink");
-    for(i=0;i<tablinks.length;i++) tablinks[i].classList.remove('active');
+    for (i=0;i<tablinks.length;i++) tablinks[i].classList.remove('active');
     document.getElementById(tabName).style.display='block';
-    event.currentTarget.classList.add('active');
+    evt.currentTarget.classList.add('active');
 }
 
+// Data aktivitas terbaru
 const recentActivities = <?php 
 $activities=[];
 foreach($siswa as $s){
     $uid = $s['id_siswa'];
-    $today = date('Y-m-d');
-    $res = $conn->query("SELECT * FROM kehadiran WHERE id_siswa='$uid' AND tanggal='$today' ORDER BY jam ASC LIMIT 1");
-    if($res->num_rows>0){
+    $res = $conn->query("SELECT * FROM absensi_siswa WHERE id_siswa='$uid' AND DATE(waktu_absensi_tercatat)='$today' ORDER BY waktu_absensi_tercatat DESC LIMIT 1");
+    if($res && $res->num_rows>0){
         $row=$res->fetch_assoc();
-        $status = strtolower($row['status']);
-        $jam = $row['jam']?:'-';
-    }else{
-        $status='alpa';
+        $status = $row['status'];
+        $jam = date('H:i:s', strtotime($row['waktu_absensi_tercatat']));
+    } else {
+        $status='Alpa';
         $jam='-';
     }
-    $parts = explode(' ', $s['nama_siswa']);
-    $inisial = strtoupper(substr($parts[0],0,1).substr($parts[1]??' ',0,1));
     $activities[] = [
-    'id_siswa' => $s['id_siswa'], 
-    'name' => $s['nama_siswa'],
-    'time' => $jam,
-    'status' => $status
-];
-
+        'id_siswa' => $s['id_siswa'], 
+        'name' => $s['nama_siswa'],
+        'time' => $jam,
+        'status' => $status
+    ];
 }
 echo json_encode($activities);
 ?>;
 
-
 const activityTableBody = document.getElementById('activityTableBody');
 recentActivities.forEach(act=>{
     const tr=document.createElement('tr');
-    const statusText = act.status.charAt(0).toUpperCase()+act.status.slice(1);
-    tr.innerHTML=`<td>${act.id_siswa}</td><td>${act.name}</td><td>${act.time}</td><td>${statusText}</td>`;
+    tr.innerHTML=`<td>${act.id_siswa}</td><td>${act.name}</td><td>${act.time}</td><td>${act.status}</td>`;
     activityTableBody.appendChild(tr);
 });
 
-
+// Pie chart
 function initializePieChart(){
     const ctx=document.getElementById('pieChart').getContext('2d');
     new Chart(ctx,{
@@ -225,50 +221,12 @@ function initializePieChart(){
                 borderWidth:1
             }]
         },
-        options:{
-            responsive:true,
-            plugins:{
-                legend:{position:'bottom'},
-                tooltip:{
-                    callbacks:{
-                        label:function(context){
-                            let total=context.dataset.data.reduce((a,b)=>a+b,0);
-                            let value=context.parsed;
-                            let percent=total?(value/total*100).toFixed(1):0;
-                            return `${context.label}: ${value} (${percent}%)`;
-                        }
-                    }
-                }
-            }
-        }
+        options:{responsive:true,plugins:{legend:{position:'bottom'}}}
     });
 }
 
-
-function initializeBarChart(){
-    const ctx=document.getElementById('attendanceChart').getContext('2d');
-    new Chart(ctx,{
-        type:'bar',
-        data:{
-            labels:['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
-            datasets:[
-                {label:'Hadir',data:[<?php echo $hadir_hari_ini; ?>],backgroundColor:'#009688'},
-                {label:'Izin',data:[<?php echo $izin_hari_ini; ?>],backgroundColor:'#FF9800'},
-                {label:'Sakit',data:[<?php echo $sakit_hari_ini; ?>],backgroundColor:'#F44336'},
-                {label:'Alpa',data:[<?php echo $alpa_hari_ini; ?>],backgroundColor:'#9E9E9E'}
-            ]
-        },
-        options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,title:{display:true,text:'Jumlah Siswa'}}}}
-    });
-}
-
-document.addEventListener('DOMContentLoaded',()=>{
-    initializePieChart();
-    initializeBarChart();
-});
+document.addEventListener('DOMContentLoaded',()=>{ initializePieChart(); });
 </script>
 
 </body>
 </html>
-
-<!-- yeyeyeyeyye -->

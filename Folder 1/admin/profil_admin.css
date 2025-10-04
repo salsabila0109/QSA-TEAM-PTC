@@ -1,0 +1,99 @@
+/* Container Profil */
+.profil-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+}
+
+/* Kartu Profil */
+.profil-card {
+    background: #E0F2F1;
+    border-radius: 10px;
+    padding: 30px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Avatar Profil */
+.profil-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #009688;
+    margin-bottom: 15px;
+}
+
+/* Informasi Profil */
+.profil-info h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #00796B;
+}
+
+.profil-info .role {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.profil-info .last-login {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 20px;
+}
+
+/* Tombol Aksi Profil */
+.profil-actions .btn {
+    display: block;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    color: #fff;
+    transition: 0.3s;
+}
+
+/* Tombol Logout */
+.profil-actions .btn.logout {
+    background: #ff574b;
+}
+
+.profil-actions .btn.logout:hover {
+    background: #D32F2F;
+}
+
+/* Tombol Lainnya (opsi 1 dan 2) */
+.profil-actions .btn:nth-child(1) {
+    background: #6bd86f;
+}
+
+.profil-actions .btn:nth-child(1):hover {
+    background: #388E3C;
+}
+
+.profil-actions .btn:nth-child(2) {
+    background: #2ca0ff;
+}
+
+.profil-actions .btn:nth-child(2):hover {
+    background: #1976D2;
+}
+
+/* Bagian Admin Profil */
+.profile-admin {
+    text-align: center;
+    padding: 20px;
+}
+
+.profile-admin .avatar img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #009688;
+    margin-bottom: 10px;
+}

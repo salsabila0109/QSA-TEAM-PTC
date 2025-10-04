@@ -1,0 +1,184 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #E0F2F1;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== Container utama ===== */
+.container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 50px auto;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Judul ===== */
+h1 {
+    text-align: center;
+    color: #004D40;
+    margin-bottom: 25px;
+    font-size: 24px;
+    letter-spacing: 0.5px;
+}
+
+/* ===== Tombol tambah ===== */
+.tambah-btn {
+    display: inline-block;
+    background-color: #009688;
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 150, 136, 0.3);
+}
+
+.tambah-btn:hover {
+    background-color: #00796B;
+    box-shadow: 0 3px 8px rgba(0, 77, 64, 0.3);
+}
+
+/* ===== Tabel ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: #004D40;
+    color: white;
+    font-weight: 600;
+}
+
+tr:nth-child(even) {
+    background-color: #F9F9F9;
+}
+
+tr:hover {
+    background-color: #E0F2F1;
+    transition: 0.2s;
+}
+
+/* ===== Tombol aksi ===== */
+.edit-btn,
+.hapus-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.edit-btn {
+    background-color: #009688;
+}
+
+.edit-btn:hover {
+    background-color: #00796B;
+}
+
+.hapus-btn {
+    background-color: #E53935;
+}
+
+.hapus-btn:hover {
+    background-color: #C62828;
+}
+
+/* ===== Pesan kosong ===== */
+.empty {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+}
+
+.back-btn {
+    display: inline-block;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.back-btn i {
+    margin-right: 5px;
+}
+
+.back-btn:hover {
+    background-color: #2980b9;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+.btn:hover {
+    background-color: #2980b9;
+}
+
+/* ===== Responsif ===== */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 8px;
+    }
+
+    .tambah-btn {
+        display: block;
+        text-align: center;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .edit-btn, .hapus-btn {
+        padding: 5px 10px;
+        font-size: 13px;
+    }
+}
+
+/* ===== Ikon dalam tombol ===== */
+.edit-btn i,
+.hapus-btn i {
+    margin-right: 6px;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+

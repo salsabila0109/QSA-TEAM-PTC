@@ -9,9 +9,7 @@ if ($_SESSION['role_pengguna'] !== 'admin') {
     exit;
 }
 
-
 $id_kelas = $_GET['id_kelas'] ?? null;
-
 
 $query = "
     SELECT 
@@ -42,13 +40,23 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <title>Notifikasi Kehadiran</title>
-    <link rel="stylesheet" href="notifikasi_kehadiran.css">
+    <link rel="stylesheet" href="notifikasi_kehadiran.css?v=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 </head>
 <body>
 <div class="dashboard-container">
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <?php if($id_kelas): ?>
+            <a href="export_excel.php?id_kelas=<?= $id_kelas ?>" class="btn-export">Export Excel</a>
+        <?php endif; ?>
+    </div>
+
     <h2>Notifikasi Kehadiran Siswa</h2>
 
-
+    <!-- Pilih Kelas -->
     <label>Pilih Kelas:</label>
     <select name="id_kelas" id="kelasSelect">
         <option value="">-- Semua Kelas --</option>
@@ -62,6 +70,7 @@ $result = $stmt->get_result();
         <?php endwhile; ?>
     </select>
 
+    <!-- Tabel Absensi -->
     <table>
         <tr>
             <th>ID Siswa</th>
@@ -84,6 +93,7 @@ $result = $stmt->get_result();
     </table>
 
     <?php if($result->num_rows == 0) echo "<p>Belum ada data absensi untuk kelas ini.</p>"; ?>
+
 </div>
 
 <script>
