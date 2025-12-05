@@ -175,3 +175,96 @@ th {
 tbody tr td:first-child {
     width: 60px;
 }
+
+/* ===== PERBAIKAN: Page size dropdown (SEJAJAR DENGAN PAGER) ===== */
+.page-size-container {
+    position: static;
+    width: 95%;
+    max-width: 1000px;
+
+    /* INI YANG NGATUR TURUN / NAIK */
+    margin: 50px auto 12px;   /* ubah 50px -> makin besar makin turun */
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+
+    font-size: 14px;
+    color: #333;
+}
+
+.page-size-container select {
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 16px;
+    background: #fff;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 10px;
+}
+
+.page-size-container .page-size-suffix {
+    color: #555;
+}
+
+.page-size-container{
+    transform: translateY(280px); /* ubah 50px -> makin besar makin turun */
+}
+
+
+/* ===== TAMBAHAN: Pager (Prev/Next) ===== */
+.pager {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eef3f1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pager-left {
+    font-size: 16px;
+    color: #555;
+}
+
+.pager-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pager-info {
+    font-size: 16px;
+    color: #444;
+    min-width: 120px;
+    text-align: center;
+}
+
+.pager-right button {
+    background: #0b5e58;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.pager-right button:hover {
+    background: #08706a;
+}
+
+.pager-right button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
