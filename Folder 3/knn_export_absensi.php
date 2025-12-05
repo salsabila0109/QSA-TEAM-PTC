@@ -10,7 +10,7 @@ if (!isset($_SESSION['role_pengguna']) || $_SESSION['role_pengguna'] !== 'admin'
 // koneksi ke database (naik satu folder ke atas)
 require_once __DIR__ . '/../db.php';
 
-// cari file KNNAbsensi.php di beberapa lokasi kemungkinan
+
 $possible = [
     __DIR__ . '/KNNAbsensi.php',
     __DIR__ . '/services/KNNAbsensi.php',
