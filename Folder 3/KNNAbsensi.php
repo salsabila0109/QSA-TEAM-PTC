@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// SIMPAN FILE INI DI: PresenTech/admin/KNNAbsensi.php
+
 
 // === LOAD DATASET LATIH ===
 require_once __DIR__ . '/model_data_knn.php';   // otomatis memuat $training_X dan $training_y
@@ -12,9 +12,7 @@ class KNNAbsensi
     private array $X = [];
     private array $y = [];
 
-    // ---------------------------------------------------
-    // KONFIGURASI: SESUAIKAN DENGAN STRUKTUR DATABASE-MU
-    // ---------------------------------------------------
+    
     // Nama tabel sumber data notifikasi kehadiran
     // GANTI kalau nama tabelmu beda (misal: 'tb_notifikasi_kehadiran')
     private const TABEL_NOTIF       = 'notifikasi';
