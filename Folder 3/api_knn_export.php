@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// ====== BOLEH TANPA LOGIN: session admin ATAU ?key=APIKEY ======
+
 $API_KEY = "PRESENTECH_KNN_2025";
 $role = strtolower(trim($_SESSION['role_pengguna'] ?? ''));
 $keyQ = trim($_GET['key'] ?? '');
