@@ -1,35 +1,46 @@
 <?php
 declare(strict_types=1);
 
+// SIMPAN FILE INI DI: PresenTech/admin/KNNAbsensi.php
+
+// === LOAD DATASET LATIH ===
+require_once __DIR__ . '/model_data_knn.php';   // otomatis memuat $training_X dan $training_y
+
 class KNNAbsensi
 {
-    /** Jumlah pembanding terdekat (k dalam KNN) */
-    private int $k = 3;
-
-    /** Fitur latih: array<array<float|int>> */
+    private int $k = 5;   // default K = 5
     private array $X = [];
-
-    /** Label latih: array<string> */
     private array $y = [];
 
-    public function __construct(int $k = 3)
+    // ---------------------------------------------------
+    // KONFIGURASI: SESUAIKAN DENGAN STRUKTUR DATABASE-MU
+    // ---------------------------------------------------
+    // Nama tabel sumber data notifikasi kehadiran
+    // GANTI kalau nama tabelmu beda (misal: 'tb_notifikasi_kehadiran')
+    private const TABEL_NOTIF       = 'notifikasi';
+
+    // Nama kolom pada tabel notifikasi_kehadiran
+    private const KOLOM_ID_SISWA    = 'id_siswa';
+    private const KOLOM_NAMA_SISWA  = 'nama_siswa';
+    private const KOLOM_STATUS      = 'status';   // kolom status (Hadir/Alpa/dll)
+    private const KOLOM_TANGGAL     = 'tanggal';  // DATE
+    // ---------------------------------------------------
+
+    public function __construct(int $k = 5)
     {
         $this->k = max(1, $k);
+
+        // jika dataset ada → langsung load
+        if (isset($GLOBALS['training_X']) && isset($GLOBALS['training_y'])) {
+            $this->setTrainingData($GLOBALS['training_X'], $GLOBALS['training_y']);
+        }
     }
 
-    /** Atur k (jumlah pembanding terdekat) */
     public function setK(int $k): void
     {
         $this->k = max(1, $k);
     }
 
-    /** Ambil k */
-    public function getK(): int
-    {
-        return $this->k;
-    }
-
-    /** Set data latih sekaligus */
     public function setTrainingData(array $X, array $y): void
     {
         if (count($X) !== count($y)) {
@@ -39,98 +50,52 @@ class KNNAbsensi
         $this->y = $y;
     }
 
-    /** Tambah satu baris data latih */
-    public function addTrainingRow(array $x, string $label): void
-    {
-        $this->X[] = $x;
-        $this->y[] = $label;
-    }
+    // =============== KNN CORE ===============
 
-    /** Kosongkan data latih */
-    public function clearTrainingData(): void
-    {
-        $this->X = [];
-        $this->y = [];
-    }
-
-    /** Jarak 1D (sesuai implementasi awal) */
+    /** Jarak Euclidean MULTI-FITUR */
     private function dist(array $a, array $b): float
     {
-        $dx = ($a[0] ?? 0) - ($b[0] ?? 0);
-        return sqrt($dx * $dx);
+        $sum = 0;
+        $len = min(count($a), count($b));
+        for ($i = 0; $i < $len; $i++) {
+            $d = ($a[$i] ?? 0) - ($b[$i] ?? 0);
+            $sum += $d * $d;
+        }
+        return sqrt($sum);
     }
 
-    /** Prediksi satu titik */
-    private function predictOne(array $x): string
+    /** Prediksi 1 data */
+    public function predictOne(array $x): string
     {
         $n = count($this->X);
-        if ($n === 0) return 'Tidak Disiplin';
+        if ($n === 0) {
+            return "Tidak Disiplin";
+        }
 
-        // hitung jarak ke semua data latih
+        // hitung jarak semua training data
         $dists = [];
         for ($i = 0; $i < $n; $i++) {
-            $dists[] = [$this->dist($x, $this->X[$i]), $this->y[$i]];
+            $d = $this->dist($x, $this->X[$i]);
+            $dists[] = [$d, $this->y[$i]];
         }
+
+        // urutkan berdasarkan jarak terkecil
         usort($dists, fn($a, $b) => $a[0] <=> $b[0]);
 
         $k = min($this->k, $n);
 
-        // voting label + simpan total jarak per label (tie-breaker)
-        $vote = [];
-        $sumDistPerLabel = [];
-        for ($i = 0; $i < $k; $i++) {
-            [$d, $lbl] = $dists[$i];
-            $vote[$lbl] = ($vote[$lbl] ?? 0) + 1;
-            $sumDistPerLabel[$lbl] = ($sumDistPerLabel[$lbl] ?? 0.0) + $d;
-        }
-
-        $maxVote = max($vote);
-        $candidates = array_keys(array_filter($vote, fn($v) => $v === $maxVote));
-        if (count($candidates) === 1) {
-            return $candidates[0];
-        }
-
-        // tie-breaker: total jarak paling kecil; jika masih seri, alfabetis
-        $best = $candidates[0];
-        $bestSum = $sumDistPerLabel[$best] ?? INF;
-        foreach ($candidates as $lbl) {
-            $sum = $sumDistPerLabel[$lbl] ?? INF;
-            if ($sum < $bestSum) {
-                $best = $lbl;
-                $bestSum = $sum;
-            } elseif ($sum === $bestSum && strcmp($lbl, $best) < 0) {
-                $best = $lbl;
-            }
-        }
-        return $best;
-    }
-
-    /** Prediksi satu titik + skor sederhana (proporsi suara dari k) */
-    public function predictOneWithScore(array $x): array
-    {
-        $n = count($this->X);
-        if ($n === 0) return ['label' => 'Tidak Disiplin', 'score' => 0.0];
-
-        $dists = [];
-        for ($i = 0; $i < $n; $i++) {
-            $dists[] = [$this->dist($x, $this->X[$i]), $this->y[$i]];
-        }
-        usort($dists, fn($a, $b) => $a[0] <=> $b[0]);
-
-        $k = min($this->k, $n);
+        // voting mayoritas label
         $vote = [];
         for ($i = 0; $i < $k; $i++) {
-            $lbl = $dists[$i][1];
-            $vote[$lbl] = ($vote[$lbl] ?? 0) + 1;
+            $label = $dists[$i][1];
+            $vote[$label] = ($vote[$label] ?? 0) + 1;
         }
+
         arsort($vote);
-        $label = array_key_first($vote);
-        $score = ($vote[$label] ?? 0) / max(1, $k);
-
-        return ['label' => $label, 'score' => $score];
+        return (string) array_key_first($vote);
     }
 
-    /** Prediksi banyak titik */
+    /** Prediksi banyak */
     public function predictBatch(array $Xtest): array
     {
         $out = [];
@@ -140,88 +105,74 @@ class KNNAbsensi
         return $out;
     }
 
- 
-   public static function labelByThreshold(int $val, int $low, int $mid): string
-{
-    // < low            => Tidak Disiplin ≤30 hari
-    // (low .. mid]     => Kurang Disiplin 31-60 hari
-    // > mid            => Disiplin > 60 hari 
-    if ($val < $low) {
-        return 'Tidak Disiplin';
-    }
-    if ($val <= $mid) {
-        return 'Kurang Disiplin';
-    }
-    return 'Disiplin';
-}
-    /** Versi tetap untuk low=30, mid=60 (opsional) */
-    public static function labelByFixedThreshold(int $val): string
-    {
-        return self::labelByThreshold($val, 30, 60);
-    }
+    // =============== AMBIL DATA ABSENSI DARI NOTIFIKASI ===============
 
     /**
-     * Ambil jumlah hadir per siswa untuk 1 semester (Senin–Jumat saja).
-     * @param mysqli     $conn
-     * @param string     $semester   'Ganjil' | 'Genap'
-     * @param int        $tahunAjar  contoh: 2025 untuk 2025/2026
-     * @param ?int       $idKelas    null = semua kelas, angka = filter
-     * @return array<int, array{id_siswa:int, nama_siswa:string, id_kelas:int|null, nama_kelas:string|null, jml_hadir:int}>
+     * Ambil jumlah hadir per siswa dari tabel notifikasi_kehadiran
+     * untuk 1 SEMESTER (pakai rentang tanggal).
+     *
+     * return:
+     * [
+     *   ['id_siswa' => 1, 'nama_siswa' => 'Ali', 'jml_hadir' => 40],
+     *   ...
+     * ]
      */
-    public static function getHadirCountsForSemester(mysqli $conn, string $semester, int $tahunAjar, ?int $idKelas = null): array
+    public static function getHadirCountsForSemester(mysqli $conn, string $semester, int $tahunAjar): array
     {
+        $data = [];
+
+        // Tentukan rentang tanggal berdasarkan semester & tahun ajar
+        // Contoh:
+        //   Ganjil: 1 Juli – 31 Des tahunAjar
+        //   Genap : 1 Jan – 30 Jun (tahunAjar + 1)
         if ($semester === 'Ganjil') {
-            $start = "$tahunAjar-07-01";
-            $end   = ($tahunAjar + 1) . "-01-01";
+            $start = sprintf('%d-07-01', $tahunAjar);
+            $end   = sprintf('%d-12-31', $tahunAjar);
         } else {
-            $start = ($tahunAjar + 1) . "-01-01";
-            $end   = ($tahunAjar + 1) . "-07-01";
+            $tahunBerikut = $tahunAjar + 1;
+            $start = sprintf('%d-01-01', $tahunBerikut);
+            $end   = sprintf('%d-06-30', $tahunBerikut);
         }
 
+        // Gunakan konstanta nama tabel/kolom
+        $tbl      = self::TABEL_NOTIF;
+        $colId    = self::KOLOM_ID_SISWA;
+        $colNama  = self::KOLOM_NAMA_SISWA;
+        $colStat  = self::KOLOM_STATUS;
+        $colTgl   = self::KOLOM_TANGGAL;
+
+        // Hanya hitung status 'Hadir'
+        // (kalau di DB kamu nilainya 'hadir' huruf kecil → ubah di sini)
         $sql = "
-            SELECT 
-                s.id_siswa, s.nama_siswa, s.id_kelas, k.nama_kelas,
-                SUM(
-                    CASE 
-                      WHEN a.status = 'hadir'
-                       AND DATE(a.waktu_absensi_tercatat) >= ?
-                       AND DATE(a.waktu_absensi_tercatat) <  ?
-                       AND WEEKDAY(DATE(a.waktu_absensi_tercatat)) BETWEEN 0 AND 4
-                      THEN 1 ELSE 0 
-                    END
-                ) AS jml_hadir
-            FROM siswa s
-            LEFT JOIN kelas k ON k.id_kelas = s.id_kelas
-            LEFT JOIN absensi_siswa a ON a.id_siswa = s.id_siswa
-            WHERE 1=1
+            SELECT
+                $colId   AS id_siswa,
+                $colNama AS nama_siswa,
+                COUNT(*) AS jml_hadir
+            FROM $tbl
+            WHERE $colStat = 'hadir'
+              AND $colTgl BETWEEN ? AND ?
+            GROUP BY $colId, $colNama
+            ORDER BY $colNama ASC
         ";
 
-        $types  = "ss";
-        $params = [$start, $end];
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param('ss', $start, $end);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-        if (!empty($idKelas)) {
-            $sql    .= " AND s.id_kelas = ? ";
-            $types  .= "i";
-            $params[] = $idKelas;
+            if ($result) {
+                while ($row = $result->fetch_assoc()) {
+                    $data[] = [
+                        'id_siswa'   => (int) $row['id_siswa'],
+                        'nama_siswa' => $row['nama_siswa'],
+                        'jml_hadir'  => (int) $row['jml_hadir'],
+                    ];
+                }
+            }
+
+            $stmt->close();
         }
 
-        $sql .= "
-            GROUP BY s.id_siswa, s.nama_siswa, s.id_kelas, k.nama_kelas
-            ORDER BY s.nama_siswa ASC
-        ";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
-        $stmt->execute();
-        $res = $stmt->get_result();
-
-        $out = [];
-        while ($r = $res->fetch_assoc()) {
-            $r['jml_hadir'] = (int)$r['jml_hadir'];
-            $out[] = $r;
-        }
-        $stmt->close();
-        return $out;
-    } 
-    
+        return $data;
+    }
 }
