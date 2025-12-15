@@ -1,6 +1,8 @@
 <?php
-session_start();
-include "db.php"; 
+// Alias: semua login dipusatkan di login.php
+header("Location: login.php");
+exit;
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];

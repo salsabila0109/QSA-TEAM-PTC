@@ -1,102 +1,125 @@
+/* =========================
+   PresenTech - index.css (layout mirip login.css)
+   ========================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
 body {
-    font-family: Arial, sans-serif;
-    background: #FFFFFF;   
-    margin: 0;
-    padding: 0;
-
- 
-    height: 100vh;
-    display: flex;
-    justify-content: center; 
-    align-items: center;     
-    overflow-x: hidden;     
+  height: 100%;
 }
 
+body {
+  font-family: Arial, sans-serif;
+  background: #FFFFFF;
+  margin: 0;
+  padding: 0;
+
+  /* Sama konsep dengan login.css */
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Hindari scroll abu-abu */
+  overflow-x: hidden;
+}
+
+/* Kotak utama */
 .welcome-container {
-    text-align: center;
-    background: #E0F2F1;
-    padding: 100px 100px;   
-    border-radius: 25px;
-    box-shadow: 0px 15px 20px rgba(0,0,0,0.1);
-    width: 80%;
-    max-width: 1120px;      
+  background: #E0F2F1;
+  border-radius: 25px;
+  text-align: center;
+  box-shadow: 0px 15px 20px rgba(0, 0, 0, 0.1);
+
+  /* Mirip login-card: center, rapi, lebar aman */
+  width: 90%;
+  max-width: 900px;
+
+  /* Padding besar tapi aman (tidak bikin overflow) */
+  padding: 70px 60px;
 }
 
+/* Wrapper logo */
 .logo-title {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.title-text {
-    font-size: 28px;
-    font-weight: bold;
-    color: #009688;
-    margin: 0;
-}
-
-h2 {
-    font-size: 50px;
-    font-weight: bold;
-    color: #009688;
-    margin: 20px 0;     
-    text-align: center;
-}
-
-p {
-    font-size: 25px;
-    color: #00695C;
-    margin-bottom: 20px;
-}
-
-.btn {
-    background: #009688;
-    color: white;
-    padding: 15px 40px;   
-    border-radius: 8px;
-    font-size: 25px;
-    text-decoration: none;
-    font-weight: bold;
-    display: inline-block;
-    transition: background 0.3s;
-    margin-top: 60px;
-}
-
-.btn:hover {
-    background: #00796B;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 25px;
 }
 
 .logo {
-    width: 430px;
-    height: auto;
-    margin-bottom: 30px;
-    margin-top: 0;
+  width: 360px;
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
+/* Judul */
+h2 {
+  margin: 10px 0 14px;
+  font-size: 46px;
+  font-weight: bold;
+  color: #009688;
+}
 
+/* Deskripsi */
+p {
+  margin: 0 0 28px;
+  font-size: 22px;
+  color: #00695C;
+}
+
+/* Tombol */
+.btn {
+  background: #009688;
+  color: white;
+  padding: 14px 44px;
+  border-radius: 12px;
+  font-size: 22px;
+  text-decoration: none;
+  font-weight: bold;
+  display: inline-block;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background: #00796B;
+}
+
+/* ======= Responsive HP ======= */
 @media (max-width: 768px) {
-    .welcome-container {
-        padding: 30px 20px;
-        width: 95%;
-    }
+  body {
+    /* biar aman kalau tinggi layar pendek */
+    padding: 16px 0;
+  }
 
-    .logo {
-        width: 150px;
-        margin-top: 0;
-    }
+  .welcome-container {
+    width: 90%;
+    padding: 32px 20px;
+  }
 
-    h2 {
-        font-size: 28px;
-    }
+  .logo {
+    width: 170px;
+  }
 
-    p {
-        font-size: 18px;
-    }
+  h2 {
+    font-size: 28px;
+  }
 
-    .btn {
-        padding: 12px 30px;  
-        font-size: 18px;
-        margin-top: 40px;
-    }
+  p {
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 260px;
+    padding: 12px 20px;
+    font-size: 16px;
+  }
 }

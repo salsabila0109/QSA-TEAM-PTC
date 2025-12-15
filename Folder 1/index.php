@@ -13,6 +13,7 @@ session_start();
     <div class="welcome-container">
         <div class="logo-title">
             <img src="logo.png" alt="Logo PresenTech" class="logo">
+            
         </div>
         <h2>Selamat Datang! 👋</h2>
         <p>Silahkan mulai untuk mengakses sistem presensi</p>
