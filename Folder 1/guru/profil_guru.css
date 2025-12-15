@@ -1,0 +1,155 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #E0F2F1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Container Profil */
+.profil-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+}
+
+/* Card Profil */
+.profil-card {
+    position: relative; /* untuk tombol back absolute */
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    max-width: 500px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Avatar Profil */
+.profil-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 20px;
+    border: 3px solid #00796B;
+}
+
+/* Info Profil */
+.profil-info h2 {
+    color: #004D40;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.profil-info label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+    color: #004D40;
+}
+
+.profil-info input[type="text"],
+.profil-info input[type="file"] {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #00796B;
+    margin-top: 5px;
+}
+
+/* Tombol aksi di bawah profil */
+.btn-group {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.profil-info .btn {
+    padding: 10px 20px;
+    background: #00796B;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.profil-info .btn:hover {
+    background: #004D40;
+}
+
+/* Tombol Back bulat hijau (di luar konten sedikit) */
+.btn-back {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background-color: #004d40;
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 18px;
+    transition: 0.3s;
+    z-index: 100;
+}
+
+.btn-back:hover {
+    background-color: #009688;
+}
+
+.btn-back i {
+    line-height: 0;
+}
+
+/* Pesan sukses / error */
+.message.success {
+    color: green;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.message.error {
+    color: red;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Tombol Ubah Password di form profil */
+.btn-ubah-password {
+    padding: 10px 20px;
+    background: #009688;      /* warna berbeda dari tombol Simpan */
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;        /* beri jarak dari tombol Simpan */
+    transition: 0.2s;
+}
+
+.btn-ubah-password i {
+    margin-right: 6px;        /* beri jarak antara ikon dan teks */
+}
+
+.btn-ubah-password:hover {
+    background: #00796B;
+}

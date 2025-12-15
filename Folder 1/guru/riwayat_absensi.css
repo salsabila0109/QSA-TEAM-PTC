@@ -1,0 +1,238 @@
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+/* (Opsional) Sidebar – kalau suatu saat dipakai */
+.sidebar {
+    width: 220px;
+    height: 100vh;
+    background-color: #00796b;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding-top: 20px;
+    color: white;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar a {
+    display: block;
+    padding: 12px 20px;
+    color: white;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    background-color: #004d40;
+}
+
+.sidebar a.active {
+    background-color: #00695c;
+}
+
+/* Main Content – tanpa sidebar, konten di tengah */
+.main-content {
+    position: relative;                /* untuk anchor btn-back */
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 20px 30px 40px;
+}
+
+.main-content h1 {
+    font-size: 30px;
+    color: #004d40;
+    margin-bottom: 4px;
+    text-align: left;     /* kiri */
+    margin-left: 10px;    /* opsional, biar gak nempel banget */
+}
+
+.main-content h2 {
+    font-size: 25px;
+    color: #00796b;
+    margin-bottom: 24px;
+    text-align: center;   /* tetap di tengah */
+    margin-left: 0;       /* pastikan nggak ke-geser */
+}
+
+
+/* Filter form */
+.filter-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background-color: #e0f2f1;
+    padding: 18px 20px;
+    border-radius: 16px;
+}
+
+.filter-form label {
+    color: #004d40;
+    font-weight: bold;
+    min-width: 110px;
+}
+
+.filter-form select,
+.filter-form input[type="date"] {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.filter-form select:hover,
+.filter-form input[type="date"]:hover {
+    border-color: #00796b;
+    box-shadow: 0 0 4px rgba(0, 121, 107, 0.4);
+}
+
+.filter-form #btnFilter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #00796b;
+    color: white;
+    width: 40px;          /* lebar */
+    height: 40px;         /* tinggi sama → jadi bulat */
+    border: none;
+    border-radius: 50%;   /* bulat */
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 18px;      /* ikon sedikit lebih besar */
+    padding: 0;           /* jangan pakai padding biar gak lonjong */
+}
+
+.filter-form button:hover {
+    background-color: #004d40;
+}
+
+
+/* Table container (kartu putih) */
+.table-container {
+    margin-top: 25px;
+    background: white;
+    padding: 20px;
+    border-radius: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Tabel */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+th {
+    background-color: #00796b;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #e0f7fa;
+}
+
+/* Status badge */
+.status {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-weight: bold;
+    color: white;
+    text-transform: capitalize;
+    display: inline-block;
+    min-width: 80px;
+}
+
+.status.hadir {
+    background-color: #4caf50;
+    text-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+.status.alpa {
+    background-color: #f44336;
+    text-shadow: 0 0 2px rgba(0,0,0,0.4);
+}
+
+.status.izin {
+    background-color: #ff9800;
+    text-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+.status.sakit {
+    background-color: #2196F3;
+    text-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+/* Tombol Back bulat hijau (di luar konten sedikit) */
+.btn-back {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background-color: #004d40;
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 18px;
+    transition: 0.3s;
+    z-index: 100;
+}
+
+.btn-back:hover {
+    background-color: #009688;
+}
+
+.btn-back i {
+    line-height: 0;
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content {
+        margin: 70px 15px 30px;
+        padding: 15px;
+    }
+
+    .filter-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    th, td {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+}

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riwayat Absensi Guru</title>
+
+  <!-- CSS utama guru + CSS khusus riwayat -->
+  <link rel="stylesheet" href="riwayat_absensi.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+
+<body>
+  <!-- Tombol back -->
+  <a href="dashboard_guru.html" class="btn-back">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+
+  <div class="main-content">
+    <h1>Halo <span id="namaGuru">Guru</span> 👋</h1>
+    <h2>Riwayat Absensi</h2>
+
+    <!-- FILTER FORM (Kelas, Mapel, Tanggal) -->
+    <form class="filter-form" id="filterForm">
+      <label for="kelas">Pilih Kelas:</label>
+      <select name="kelas" id="kelas">
+        <option value="">Semua Kelas</option>
+        <!-- opsi kelas diisi dari api_kelas_siswa.php -->
+      </select>
+
+      <label for="mapel">Pilih Mata Pelajaran:</label>
+      <select name="mapel" id="mapel">
+        <option value="">Semua Mata Pelajaran</option>
+        <!-- opsi mapel diisi dari /attendance -->
+      </select>
+
+      <label for="tanggal">Tanggal:</label>
+      <input type="date" name="tanggal" id="tanggal">
+
+      <button type="button" id="btnFilter" title="Terapkan filter">
+        <i class="fas fa-search"></i>
+      </button>
+
+      <!-- ====== SISA: tombol tutup sesi saja ====== -->
+      <button type="button" id="btnTutupSesi" title="Tutup Sesi" style="
+        height:40px; padding:0 14px; border:none; border-radius:10px;
+        background:#004d40; color:#fff; font-weight:700; cursor:pointer;
+        display:inline-flex; align-items:center; gap:8px;
+      ">
+        <i class="fa-solid fa-stop"></i> Tutup
+      </button>
+      <!-- ====== END ====== -->
+    </form>
+
+    <!-- TABEL RIWAYAT -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>ID Siswa</th>
+            <th>Nama Siswa</th>
+            <th>Kelas</th>
+            <th>Mata Pelajaran</th>
+            <th>Status</th>
+            <th>Jam</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyAbsensi">
+          <tr>
+            <td colspan="7">Memuat data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase + Logika Riwayat -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // ========= KONFIGURASI PROJECT KAMU =========
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuayRKFrLjWaVcrWBeWZjmA4V_CWPtPcU",
+      authDomain: "presentech-4c4c0.firebaseapp.com",
+      databaseURL: "https://presentech-4c4c0-default-rtdb.firebaseio.com",
+      projectId: "presentech-4c4c0",
+      storageBucket: "presentech-4c4c0.appspot.com",
+      messagingSenderId: "255263820694",
+      appId: "1:255263820694:web:c7dd9f18b5b529cf67abb7"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const db   = getDatabase(app);
+    const auth = getAuth(app);
+
+    // ====== DOM ELEMENTS ======
+    const namaGuruSpan = document.getElementById("namaGuru");
+    const kelasSelect  = document.getElementById("kelas");
+    const mapelSelect  = document.getElementById("mapel");
+    const tanggalInput = document.getElementById("tanggal");
+    const btnFilter    = document.getElementById("btnFilter");
+    const tbodyAbsensi = document.getElementById("tbodyAbsensi");
+
+    // ====== tombol tutup sesi ======
+    const btnTutupSesi = document.getElementById("btnTutupSesi");
+    let sesiBusy = false;
+
+    function setSesiBusy(isBusy) {
+      sesiBusy = isBusy;
+      if (btnTutupSesi) btnTutupSesi.disabled = isBusy;
+      if (btnTutupSesi) btnTutupSesi.style.opacity = isBusy ? "0.7" : "1";
+      if (btnTutupSesi) btnTutupSesi.style.cursor = isBusy ? "not-allowed" : "pointer";
+    }
+
+    function getSelectedSesiPayload() {
+      const tanggal = (tanggalInput.value || getTodayString()).trim();
+      const kelas   = (kelasSelect.value || "").trim();
+      const mapel   = (mapelSelect.value || "").trim();
+      return { tanggal, kelas, mapel };
+    }
+
+    function validateSesiPayload({ tanggal, kelas, mapel }) {
+      if (!tanggal) return "Tanggal belum dipilih.";
+      if (!kelas)   return "Pilih kelas dulu (jangan 'Semua Kelas') untuk sesi.";
+      if (!mapel)   return "Pilih mata pelajaran dulu (jangan 'Semua Mata Pelajaran') untuk sesi.";
+      return null;
+    }
+
+    // ====== STATE ======
+    let studentsData       = {}; // /students
+    let studentsByFingerId = {}; // finger_id -> { idSiswa, nama, kelas (fallback) }
+    let attendanceData     = {}; // /attendance
+    let siswaKelas         = {}; // id_siswa -> nama_kelas (dari PHP)
+    let kelasList          = []; // daftar nama_kelas (dari PHP)
+    let realtimeStarted    = false;
+
+    // Nama guru dari localStorage
+    const storedNamaGuru = localStorage.getItem("namaGuru");
+    if (storedNamaGuru) {
+      namaGuruSpan.textContent = storedNamaGuru;
+    }
+
+    function getTodayString() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    // Set default tanggal = hari ini
+    if (!tanggalInput.value) {
+      tanggalInput.value = getTodayString();
+    }
+
+    // ====== Helper: ambil node fingerprint (2 bentuk struktur) ======
+    // 1) attendance[tgl].fingerprint.{id}
+    // 2) attendance[tgl].{id}
+    function getFingerprintNode(dayNode) {
+      if (!dayNode || typeof dayNode !== "object") return {};
+      if (dayNode.fingerprint && typeof dayNode.fingerprint === "object") {
+        return dayNode.fingerprint;
+      }
+      return dayNode;
+    }
+
+    // ====== ISI DROPDOWN KELAS DARI PHP ======
+    function refreshKelasDropdown() {
+      kelasSelect.innerHTML = '<option value="">Semua Kelas</option>';
+
+      const sumber = Array.isArray(kelasList) ? kelasList : [];
+      sumber.forEach((kls) => {
+        if (!kls) return;
+        const opt = document.createElement("option");
+        opt.value = kls;
+        opt.textContent = kls;
+        kelasSelect.appendChild(opt);
+      });
+    }
+
+    // ====== ISI DROPDOWN MAPEL DARI /attendance (mirip notifikasi_kehadiran) ======
+    function refreshMapelDropdown() {
+      const mapelSet = new Set();
+
+      Object.values(attendanceData).forEach((perTanggal) => {
+        if (!perTanggal) return;
+
+        const fpNode   = getFingerprintNode(perTanggal);
+        const rfidNode = perTanggal.rfid || {};
+
+        Object.values(fpNode).forEach((item) => {
+          if (item && item.mapel) {
+            const mVal = String(item.mapel).trim();
+            if (!mVal) return;
+
+            // === TAMBAHAN MINIMAL: HILANGKAN "RFID LOGIN" DARI DROPDOWN ===
+            if (mVal.toUpperCase() === "RFID LOGIN") return;
+
+            mapelSet.add(mVal);
+          }
+        });
+
+        Object.values(rfidNode).forEach((item) => {
+          if (item && item.mapel) {
+            const mVal = String(item.mapel).trim();
+            if (!mVal) return;
+
+            // === TAMBAHAN MINIMAL: HILANGKAN "RFID LOGIN" DARI DROPDOWN ===
+            if (mVal.toUpperCase() === "RFID LOGIN") return;
+
+            mapelSet.add(mVal);
+          }
+        });
+      });
+
+      mapelSelect.innerHTML = '<option value="">Semua Mata Pelajaran</option>';
+      Array.from(mapelSet).sort().forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        mapelSelect.appendChild(opt);
+      });
+    }
+
+    // ====== RENDER TABEL RIWAYAT (filter tanggal + kelas + mapel) ======
+    function renderTable() {
+      const selectedDate  = (tanggalInput.value || getTodayString()).trim();
+      const selectedKelas = (kelasSelect.value  || "").trim();
+      const selectedMapel = (mapelSelect.value  || "").trim();
+
+      console.log("renderTable() selectedDate:", selectedDate);
+      console.log("Tanggal tersedia di attendanceData:", Object.keys(attendanceData));
+
+      let rows = "";
+      let no   = 1;
+
+      Object.entries(attendanceData).forEach(([tanggal, perTanggal]) => {
+        if (selectedDate && tanggal !== selectedDate) return;
+
+        const fpNode = getFingerprintNode(perTanggal);
+
+        Object.entries(fpNode).forEach(([key, item]) => {
+          if (!item) return;
+
+          const fingerId = item.finger_id ?? item.fingerID ?? key;
+          let mapel      = (item.mapel || "-").toString().trim();
+          let jam        = item.time  || "-";
+          let status     = (item.status || "Hadir").toLowerCase();
+
+          const info = studentsByFingerId[String(fingerId)];
+          let idSiswa = fingerId;
+          let nama    = item.siswa || "-";
+          let kelas   = "-";
+
+          if (info) {
+            idSiswa = info.idSiswa;
+            if (info.nama)  nama  = info.nama;
+
+            const kelasPhp  = siswaKelas[idSiswa] || "";
+            const kelasInfo = info.kelas || "";
+            kelas = (kelasPhp || kelasInfo || "-").toString().trim();
+          }
+
+          const kelasNorm = (kelas || "").toString().trim();
+
+          // FILTER KELAS
+          if (selectedKelas && kelasNorm !== selectedKelas) return;
+
+          // FILTER MAPEL
+          if (selectedMapel && mapel !== selectedMapel) return;
+
+          // Normalisasi status ke 4 value
+          if (!["hadir", "izin", "sakit", "alpa"].includes(status)) {
+            status = "hadir"; // default
+          }
+
+          rows += `
+            <tr>
+              <td>${no++}</td>
+              <td>${idSiswa}</td>
+              <td>${nama}</td>
+              <td>${kelasNorm || "-"}</td>
+              <td>${mapel}</td>
+              <td><span class="status ${status}">${
+                status.charAt(0).toUpperCase() + status.slice(1)
+              }</span></td>
+              <td>${jam}</td>
+            </tr>
+          `;
+        });
+      });
+
+      if (!rows) {
+        rows = `
+          <tr>
+            <td colspan="7">Tidak ada data absensi untuk filter yang dipilih.</td>
+          </tr>
+        `;
+      }
+
+      tbodyAbsensi.innerHTML = rows;
+    }
+
+    // ====== LISTENER /students (Firebase) ======
+    function startRealtime() {
+      if (realtimeStarted) return;
+      realtimeStarted = true;
+
+      const studentsRef = ref(db, "students");
+      onValue(studentsRef, (snapshot) => {
+        const val = snapshot.val() || {};
+        studentsData = val;
+
+        const map = {};
+        Object.entries(val).forEach(([idSiswa, obj]) => {
+          if (!obj) return;
+          const fid = obj.finger_id ?? obj.fingerID;
+          if (fid === undefined || fid === null) return;
+          map[String(fid)] = {
+            idSiswa,
+            nama : obj.nama || obj.nama_siswa || "",
+            kelas: obj.kelas || ""
+          };
+        });
+        studentsByFingerId = map;
+
+        renderTable();
+      });
+
+      // ====== LISTENER /attendance (Firebase) ======
+      const attendanceRef = ref(db, "attendance");
+      onValue(attendanceRef, (snapshot) => {
+        attendanceData = snapshot.val() || {};
+        console.log("attendanceData (riwayat):", attendanceData);
+        refreshMapelDropdown();
+        renderTable();
+      });
+    }
+
+    // ====== LOAD KELAS + MAPPING SISWA-KELAS DARI PHP ======
+    async function loadKelasFromPHP() {
+      try {
+        const res = await fetch("../api_kelas_siswa.php", {
+          credentials: "include"
+        });
+        if (!res.ok) {
+          console.error("Gagal load api_kelas_siswa.php:", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        console.log("Respon api_kelas_siswa.php (riwayat):", data);
+
+        if (!data.success) {
+          console.error("API error:", data.message);
+          return;
+        }
+
+        kelasList  = Array.isArray(data.kelas_list) ? data.kelas_list : [];
+        siswaKelas = (data.siswa_kelas && typeof data.siswa_kelas === "object")
+          ? data.siswa_kelas
+          : {};
+
+        refreshKelasDropdown();
+        renderTable();
+      } catch (err) {
+        console.error("Error fetch api_kelas_siswa.php:", err);
+      }
+    }
+
+    // ====== EVENT FILTER ======
+    btnFilter.addEventListener("click", () => {
+      renderTable();
+    });
+
+    kelasSelect.addEventListener("change", () => {
+      renderTable();
+    });
+
+    mapelSelect.addEventListener("change", () => {
+      renderTable();
+    });
+
+    tanggalInput.addEventListener("change", () => {
+      renderTable();
+    });
+
+    // ====== EVENT TUTUP SESI (saja) ======
+    if (btnTutupSesi) {
+      btnTutupSesi.addEventListener("click", async () => {
+        if (sesiBusy) return;
+
+        const payload = getSelectedSesiPayload();
+        const errMsg = validateSesiPayload(payload);
+        if (errMsg) {
+          alert(errMsg);
+          return;
+        }
+
+        const ok = confirm(
+          `Tutup sesi sekarang?\n\nTanggal: ${payload.tanggal}\nKelas: ${payload.kelas}\nMapel: ${payload.mapel}\n\nSiswa yang belum absen akan dibuatkan status: ALPA.`
+        );
+        if (!ok) return;
+
+        try {
+          setSesiBusy(true);
+
+          const res = await fetch("../api_tutup_sesi.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload)
+          });
+
+          const json = await res.json().catch(() => null);
+          if (!res.ok || !json || !json.success) {
+            alert("Gagal tutup sesi: " + (json?.message || res.statusText || "Unknown error"));
+            return;
+          }
+
+          alert(json.message || "Sesi berhasil ditutup.");
+          renderTable();
+        } catch (e) {
+          console.error(e);
+          alert("Terjadi error saat tutup sesi.");
+        } finally {
+          setSesiBusy(false);
+        }
+      });
+    }
+
+    // ====== AUTH ANONYM DAN MULAI REALTIME ======
+    signInAnonymously(auth).catch((error) => {
+      console.error("Gagal anonymous sign-in (riwayat):", error.code, error.message);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Anon login OK (riwayat), uid:", user.uid);
+        startRealtime();
+      } else {
+        console.log("Belum login Firebase, data riwayat tidak dimuat.");
+      }
+    });
+
+    // MULAI: load kelas dari PHP
+    loadKelasFromPHP();
+  </script>
+</body>
+</html>

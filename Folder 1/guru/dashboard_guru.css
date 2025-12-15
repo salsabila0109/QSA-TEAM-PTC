@@ -1,0 +1,165 @@
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    height: 100vh;
+    background-color: #00796b;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding-top: 20px;
+    color: white;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar a {
+    display: block;
+    padding: 12px 20px;
+    color: white;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    background-color: #004d40;
+}
+
+.sidebar a.active {
+    background-color: #00695c;
+}
+
+/* Main Content */
+.main-content {
+    margin-left: 240px; /* agar sidebar tetap terlihat */
+    padding: 30px;
+}
+
+/* Heading */
+.main-content h1 {
+    font-size: 24px;
+    color: #004d40;
+    margin-bottom: 10px;
+}
+
+.main-content h2 {
+    color: #00796b;
+    margin-bottom: 20px;
+}
+
+/* Filter Form */
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    background-color: #e0f2f1;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-form label {
+    font-weight: bold;
+    margin-right: 6px;
+    white-space: nowrap;
+}
+
+.filter-form select,
+.filter-form input[type="date"] {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.filter-form button {
+    background-color: #00796b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    align-self: flex-start;
+}
+
+.filter-form button:hover {
+    background-color: #004d40;
+}
+
+.chart-container canvas {
+    max-width: 200px;   /* lebar maksimal */
+    max-height: 200px;  /* tinggi maksimal */
+    margin: 0 auto;     /* biar di tengah */
+}
+
+.chart-container h2 {
+    text-align: center;   /* Biar di tengah */
+    font-size: 18px;      /* Ukuran lebih kecil, sesuaikan sesuai selera */
+    margin-bottom: 10px;  /* Spasi antara judul dan chart */
+}
+
+
+/* Table */
+.table-container {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px 12px;
+    text-align: center;
+}
+
+th {
+    background-color: #00796b;
+    color: white;
+}
+
+tr:nth-child(even) { background-color: #f2f2f2; }
+tr:hover { background-color: #e0f7fa; }
+
+/* Status Label */
+.status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    color: white;
+    text-transform: capitalize;
+}
+
+.status.hadir { background-color: #4CaF50; }
+.status.izin { background-color: #FF9800; }
+.status.sakit { background-color: #2196F3; }
+.status.alpa { background-color: #F44336; }
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content { margin-left: 0; padding: 20px; }
+    .filter-form { flex-direction: column; align-items: flex-start; }
+}

@@ -1,0 +1,107 @@
+/* ================================
+   UPDATE STATUS ABSENSI STYLE
+   (Warna disamakan dengan data_mapel.css)
+   ================================ */
+
+:root {
+  --teal: #009688;
+  --teal-dark: #00796B;
+  --green: #2E7D32;
+  --red: #C62828;
+  --text: #333;
+  --bg: #f5f5f5;
+  --white: #fff;
+  --border: #ddd;
+  --shadow: 0 0 10px rgba(0,0,0,.1);
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  color: var(--text);
+}
+
+/* Judul */
+h1 {
+  color: var(--teal-dark);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Form utama */
+form {
+  background: var(--white);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+/* Label */
+label {
+  display: block;
+  font-weight: bold;
+  color: var(--teal-dark);
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+/* Dropdown */
+select {
+  padding: 10px 12px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  margin-bottom: 20px;
+  background: var(--white);
+  outline: none;
+  transition: 0.2s;
+}
+
+select:hover, select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 5px rgba(0,150,136,0.3);
+}
+
+/* Tombol simpan */
+button {
+  padding: 10px 22px;
+  background: var(--teal);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: var(--teal-dark);
+}
+
+/* Pesan status */
+.status-message {
+  margin-top: 16px;
+  color: var(--green);
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* Responsif */
+@media (max-width: 600px) {
+  form {
+    padding: 18px;
+  }
+  h1 {
+    font-size: 20px;
+  }
+}

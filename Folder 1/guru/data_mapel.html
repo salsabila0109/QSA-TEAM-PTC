@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Mata Pelajaran</title>
+
+  <link rel="stylesheet" href="data_mapel.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+
+<body>
+  <div class="container-mapel">
+
+    <a href="dashboard_guru.html" class="btn-back">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+
+    <h2>📘 Data Mata Pelajaran</h2>
+
+    <form class="filter-form" id="filterForm">
+      <label for="kelas">Pilih Kelas:</label>
+      <select name="kelas" id="kelas">
+        <option value="">-- Semua Kelas --</option>
+      </select>
+
+      <label for="mapel">Pilih Mapel:</label>
+      <select name="mapel" id="mapel">
+        <option value="">-- Semua Mapel --</option>
+      </select>
+
+      <label for="tanggal">Tanggal:</label>
+      <input type="date" name="tanggal" id="tanggal">
+
+      <button type="submit" class="btn-submit" title="Cari">
+        <i class="fas fa-search"></i>
+      </button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Siswa</th>
+          <th>Mata Pelajaran</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyMapel">
+        <tr>
+          <td colspan="4">Memuat data...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Popup Edit -->
+  <div class="popup-bg" id="popup-edit" style="display:none;">
+    <div class="popup-content">
+      <h3>Ubah Status Siswa</h3>
+      <form id="form-edit-status">
+        <select name="status" id="edit-status" required>
+          <option value="hadir">Hadir</option>
+          <option value="alpa">Alpa</option>
+          <option value="sakit">Sakit</option>
+          <option value="izin">Izin</option>
+        </select>
+        <div class="popup-btns">
+          <button type="submit" class="btn-simpan">Simpan</button>
+          <button type="button" class="btn-batal" id="btnBatal">Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // ========= KONFIGURASI PROJECT =========
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuayRKFrLjWaVcrWBeWZjmA4V_CWPtPcU",
+      authDomain: "presentech-4c4c0.firebaseapp.com",
+      databaseURL: "https://presentech-4c4c0-default-rtdb.firebaseio.com",
+      projectId: "presentech-4c4c0",
+      storageBucket: "presentech-4c4c0.appspot.com",
+      messagingSenderId: "255263820694",
+      appId: "1:255263820694:web:c7dd9f18b5b529cf67abb7"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const db   = getDatabase(app);
+    const auth = getAuth(app);
+
+    // ====== DOM ======
+    const kelasSelect  = document.getElementById("kelas");
+    const mapelSelect  = document.getElementById("mapel");
+    const tanggalInput = document.getElementById("tanggal");
+    const tbody        = document.getElementById("tbodyMapel");
+    const filterForm   = document.getElementById("filterForm");
+
+    // Popup
+    const popupBg       = document.getElementById("popup-edit");
+    const editStatusSel = document.getElementById("edit-status");
+    const formEdit      = document.getElementById("form-edit-status");
+    const btnBatal      = document.getElementById("btnBatal");
+
+    // ====== STATE ======
+    let attendanceData = {};          // /attendance
+    let studentsByFingerId = {};      // finger_id -> { idSiswa, nama }
+    let studentsById = {};            // id_siswa  -> { nama }
+    let kelasList = [];               // dari PHP
+    let siswaKelas = {};              // id_siswa -> nama_kelas dari PHP
+    let siswaInfo = {};               // id_siswa -> { nama, nis, nama_kelas } dari PHP ✅
+
+    // edit state
+    let currentEdit = { dateKey: null, source: null, recKey: null };
+
+    // ====== UTIL ======
+    function norm(v){ return String(v ?? "").trim(); }
+    function upper(v){ return norm(v).toUpperCase(); }
+
+    function getTodayString() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatStatusLabel(raw) {
+      const s = norm(raw).toLowerCase();
+      if (!s) return "-";
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    // Firebase date key bisa: "2025-12-08" / "08/12/2025" dll
+    function parseDateKeyToISO(keyRaw) {
+      const key = norm(keyRaw);
+      if (!key) return null;
+
+      const k10 = key.length >= 10 ? key.slice(0, 10) : key;
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(k10)) return k10;
+      if (/^\d{4}\/\d{2}\/\d{2}$/.test(k10)) return k10.replaceAll("/", "-");
+
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(k10)) {
+        const [dd, mm, yyyy] = k10.split("/");
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      if (/^\d{2}-\d{2}-\d{4}$/.test(k10)) {
+        const [dd, mm, yyyy] = k10.split("-");
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      return null;
+    }
+
+    function tanggalMatch(firebaseDateKey, selectedISO) {
+      if (!selectedISO) return true;
+      const iso = parseDateKeyToISO(firebaseDateKey);
+      return iso ? (iso === selectedISO) : (norm(firebaseDateKey) === selectedISO);
+    }
+
+    function getFingerprintNode(perTanggal) {
+      if (!perTanggal || typeof perTanggal !== "object") return {};
+      if (perTanggal.fingerprint && typeof perTanggal.fingerprint === "object") return perTanggal.fingerprint;
+
+      // fallback struktur lama: record langsung
+      const clone = { ...perTanggal };
+      delete clone.fingerprint;
+      delete clone.rfid;
+      return clone;
+    }
+
+    function getRfidNode(perTanggal) {
+      if (!perTanggal || typeof perTanggal !== "object") return {};
+      if (perTanggal.rfid && typeof perTanggal.rfid === "object") return perTanggal.rfid;
+      return {};
+    }
+
+    function getFingerIdFromItem(item, fallbackKey) {
+      const fid = item?.finger_id ?? item?.fingerID ?? item?.fingerId ?? fallbackKey ?? "";
+      const s = norm(fid);
+      return s ? s : null;
+    }
+
+    function getIdSiswaFromItem(item) {
+      const v = item?.id_siswa ?? item?.idSiswa ?? item?.student_id ?? item?.studentId ?? "";
+      const s = norm(v);
+      return s ? s : null;
+    }
+
+    function getNamaPrioritas(idSiswa, fingerId, item) {
+      // prioritas nama: MySQL -> Firebase byId -> Firebase byFinger -> attendance fields
+      return (
+        norm(siswaInfo?.[idSiswa]?.nama) ||
+        norm(studentsById?.[idSiswa]?.nama) ||
+        norm(studentsByFingerId?.[fingerId]?.nama) ||
+        norm(item?.nama || item?.nama_siswa || item?.siswa) ||
+        "-"
+      );
+    }
+
+    function getKelasPrioritas(idSiswa, item) {
+      return (
+        norm(siswaKelas?.[idSiswa]) ||
+        norm(siswaInfo?.[idSiswa]?.nama_kelas) ||
+        norm(item?.kelas || item?.nama_kelas || item?.class) ||
+        ""
+      );
+    }
+
+    // ====== LOAD KELAS + SISWA INFO DARI PHP ======
+    async function loadKelasFromPHP() {
+      try {
+        const res = await fetch("../api_kelas_siswa.php", { credentials: "include" });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (!data || typeof data !== "object") return;
+
+        kelasList  = Array.isArray(data.kelas_list) ? data.kelas_list : [];
+        siswaKelas = (data.siswa_kelas && typeof data.siswa_kelas === "object") ? data.siswa_kelas : {};
+        siswaInfo  = (data.siswa_info  && typeof data.siswa_info  === "object") ? data.siswa_info  : {}; // ✅ penting
+
+        refreshKelasDropdown();
+        renderTable();
+      } catch (e) {
+        console.error("loadKelasFromPHP error:", e);
+      }
+    }
+
+    function refreshKelasDropdown() {
+      const prev = kelasSelect.value || "";
+      kelasSelect.innerHTML = '<option value="">-- Semua Kelas --</option>';
+
+      const set = new Set();
+      (kelasList || []).forEach(k => { if (norm(k)) set.add(norm(k)); });
+
+      // fallback bila kelasList kosong: ambil dari mapping siswaKelas
+      Object.values(siswaKelas || {}).forEach(k => { if (norm(k)) set.add(norm(k)); });
+
+      Array.from(set).sort((a,b)=>a.localeCompare(b,"id")).forEach(kls => {
+        const opt = document.createElement("option");
+        opt.value = kls;
+        opt.textContent = kls;
+        kelasSelect.appendChild(opt);
+      });
+
+      if (prev && [...kelasSelect.options].some(o => o.value === prev)) {
+        kelasSelect.value = prev;
+      }
+    }
+
+    function isiDropdownMapel() {
+      const prev = mapelSelect.value || "";
+      const mapelSet = new Set();
+
+      Object.values(attendanceData || {}).forEach(perTanggal => {
+        if (!perTanggal) return;
+
+        const fpNode = getFingerprintNode(perTanggal);
+        const rfidNode = getRfidNode(perTanggal);
+
+        const collect = (node) => {
+          Object.values(node || {}).forEach(item => {
+            const m = norm(item?.mapel);
+            if (!m) return;
+            if (upper(m) === "RFID LOGIN") return;
+            mapelSet.add(m);
+          });
+        };
+
+        collect(fpNode);
+        collect(rfidNode);
+      });
+
+      mapelSelect.innerHTML = '<option value="">-- Semua Mapel --</option>';
+      Array.from(mapelSet).sort((a,b)=>a.localeCompare(b,"id")).forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        mapelSelect.appendChild(opt);
+      });
+
+      if (prev && [...mapelSelect.options].some(o => o.value === prev)) {
+        mapelSelect.value = prev;
+      }
+    }
+
+    // ====== RENDER TABLE (✅ skip nama "-") ======
+    function renderTable() {
+      const selectedKelas   = norm(kelasSelect.value);
+      const selectedMapel   = norm(mapelSelect.value);
+      const selectedTanggal = norm(tanggalInput.value);
+
+      if (!attendanceData || Object.keys(attendanceData).length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">Belum ada data attendance.</td></tr>`;
+        return;
+      }
+
+      const rows = [];
+
+      Object.entries(attendanceData).forEach(([tanggalKey, perTanggal]) => {
+        if (!tanggalMatch(tanggalKey, selectedTanggal)) return;
+
+        const fpNode = getFingerprintNode(perTanggal);
+        const rfidNode = getRfidNode(perTanggal);
+
+        const sources = [
+          { source: "fingerprint", node: fpNode },
+          { source: "rfid", node: rfidNode }
+        ];
+
+        sources.forEach(({ source, node }) => {
+          if (!node || typeof node !== "object") return;
+
+          Object.entries(node).forEach(([recKey, item]) => {
+            if (!item || typeof item !== "object") return;
+
+            const mapel = norm(item.mapel);
+            if (!mapel) return;
+            if (upper(mapel) === "RFID LOGIN") return;
+
+            if (selectedMapel && mapel !== selectedMapel) return;
+
+            const fingerId = getFingerIdFromItem(item, recKey);
+            const idSiswaFromItem = getIdSiswaFromItem(item);
+
+            // tentukan id siswa
+            let idSiswa = idSiswaFromItem || "";
+            if (!idSiswa && fingerId && studentsByFingerId[fingerId]?.idSiswa) {
+              idSiswa = studentsByFingerId[fingerId].idSiswa;
+            }
+            if (!idSiswa && fingerId) idSiswa = fingerId;
+
+            const kelasNama = idSiswa ? getKelasPrioritas(idSiswa, item) : "";
+            if (selectedKelas) {
+              if (!kelasNama) return;
+              if (kelasNama !== selectedKelas) return;
+            }
+
+            const namaSiswa = getNamaPrioritas(idSiswa, fingerId, item);
+
+            // ✅ FILTER UTAMA: jangan tampilkan jika nama "-" / kosong
+            const namaNorm = norm(namaSiswa);
+            if (!namaNorm || namaNorm === "-" || namaNorm.toLowerCase() === "null" || namaNorm.toLowerCase() === "undefined") {
+              return;
+            }
+
+            // ✅ OPTIONAL (lebih ketat): pastikan terdaftar di MySQL atau /students
+            const existsInMysql = !!norm(siswaInfo?.[idSiswa]?.nama);
+            const existsInFb    = !!norm(studentsById?.[idSiswa]?.nama);
+            if (!existsInMysql && !existsInFb) {
+              return;
+            }
+
+            let statusRaw = norm(item.status || "hadir").toLowerCase();
+            if (!["hadir","izin","sakit","alpa"].includes(statusRaw)) statusRaw = "hadir";
+            const statusLabel = formatStatusLabel(statusRaw);
+
+            rows.push({
+              namaSiswa,
+              mapel,
+              statusRaw,
+              statusLabel,
+              dateKey: tanggalKey,
+              source,
+              recKey
+            });
+          });
+        });
+      });
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">Tidak ada data untuk filter yang dipilih.</td></tr>`;
+        return;
+      }
+
+      rows.sort((a,b)=> a.namaSiswa.localeCompare(b.namaSiswa,"id"));
+
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.namaSiswa}</td>
+          <td>${r.mapel}</td>
+          <td><span class="status-badge ${r.statusRaw}">${r.statusLabel}</span></td>
+          <td>
+            <i class="fas fa-pencil-alt btn-edit"
+               data-date="${String(r.dateKey).replace(/"/g,'&quot;')}"
+               data-source="${String(r.source).replace(/"/g,'&quot;')}"
+               data-reckey="${String(r.recKey).replace(/"/g,'&quot;')}"
+               data-status="${String(r.statusRaw).replace(/"/g,'&quot;')}"
+               title="Edit status"></i>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    // ====== POPUP EDIT ======
+    function bukaPopup(dateKey, source, recKey, currentStatus) {
+      currentEdit = { dateKey, source, recKey };
+      editStatusSel.value = (currentStatus || "hadir").toLowerCase();
+      popupBg.style.display = "flex";
+    }
+
+    function tutupPopup() {
+      popupBg.style.display = "none";
+      currentEdit = { dateKey: null, source: null, recKey: null };
+    }
+
+    btnBatal.addEventListener("click", tutupPopup);
+
+    // Delegasi klik edit
+    tbody.addEventListener("click", (e) => {
+      const el = e.target.closest(".btn-edit");
+      if (!el) return;
+
+      const dateKey = el.getAttribute("data-date");
+      const source  = el.getAttribute("data-source");
+      const recKey  = el.getAttribute("data-reckey");
+      const status  = el.getAttribute("data-status");
+
+      bukaPopup(dateKey, source, recKey, status);
+    });
+
+    formEdit.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const newStatus = editStatusSel.value;
+
+      if (!currentEdit.dateKey || !currentEdit.source || !currentEdit.recKey) {
+        alert("Data tidak valid untuk update.");
+        return;
+      }
+
+      try {
+        const recRef = ref(db, `attendance/${currentEdit.dateKey}/${currentEdit.source}/${currentEdit.recKey}`);
+        await update(recRef, { status: newStatus });
+        alert("✅ Status siswa berhasil diperbarui!");
+        tutupPopup();
+      } catch (err) {
+        console.error(err);
+        alert("Gagal memperbarui status. Coba lagi.");
+      }
+    });
+
+    // ====== FILTER EVENTS ======
+    filterForm.addEventListener("submit", (e) => { e.preventDefault(); renderTable(); });
+    kelasSelect.addEventListener("change", renderTable);
+    mapelSelect.addEventListener("change", renderTable);
+    tanggalInput.addEventListener("change", renderTable);
+
+    // default tanggal hari ini
+    if (!tanggalInput.value) tanggalInput.value = getTodayString();
+
+    // ====== REALTIME START ======
+    function startRealtime() {
+      // students
+      onValue(ref(db, "students"), (snapshot) => {
+        const val = snapshot.val() || {};
+
+        const byFinger = {};
+        const byId = {};
+
+        Object.entries(val).forEach(([studentId, obj]) => {
+          if (!obj) return;
+
+          const idSiswa = String(studentId);
+          const nama = norm(obj.nama || obj.nama_siswa || "");
+          if (nama) byId[idSiswa] = { nama };
+
+          const fid = norm(obj.finger_id ?? obj.fingerID ?? obj.fingerId);
+          if (fid) byFinger[fid] = { idSiswa, nama };
+        });
+
+        studentsByFingerId = byFinger;
+        studentsById = byId;
+
+        renderTable();
+      }, (err) => console.error("students read error:", err));
+
+      // attendance
+      onValue(ref(db, "attendance"), (snapshot) => {
+        attendanceData = snapshot.val() || {};
+        isiDropdownMapel();
+        renderTable();
+      }, (err) => console.error("attendance read error:", err));
+
+      // PHP mapping
+      loadKelasFromPHP();
+    }
+
+    // ====== AUTH ======
+    signInAnonymously(auth).catch((err) => {
+      console.error("Anonymous sign-in failed:", err.code, err.message);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) startRealtime();
+    });
+  </script>
+
+</body>
+</html>

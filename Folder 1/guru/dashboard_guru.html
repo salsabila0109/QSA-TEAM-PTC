@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Guru - PresenTech</title>
+
+  <link rel="stylesheet" href="dashboard_guru.css" />
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <h2>PresenTech</h2>
+  <a href="dashboard_guru.html" class="active">
+    <i class="fas fa-home"></i> Dashboard
+  </a>
+  <a href="riwayat_absensi.html">
+    <i class="fas fa-history"></i> Riwayat Absensi
+  </a>
+  <a href="data_mapel.html">
+    <i class="fas fa-book"></i> Data Mata Pelajaran
+  </a>
+  <a href="profil_guru.php">
+    <i class="fas fa-user"></i> Profil Guru
+  </a>
+  <a href="../logout.php" onclick="return confirm('Apakah Anda yakin ingin logout?')">
+    <i class="fas fa-sign-out-alt"></i> Logout
+  </a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+
+  <h1>Halo Guru, <span id="guruName">Guru</span></h1>
+
+  <!-- Filter Form (kelas + tanggal) -->
+  <form class="filter-form" id="filterFormGuru" onsubmit="return false;">
+    <label for="kelasGuru">Pilih Kelas:</label>
+    <select id="kelasGuru">
+      <option value="">-- Semua Kelas --</option>
+    </select>
+
+    <label for="filterTanggalGuru">Tanggal:</label>
+    <input type="date" id="filterTanggalGuru" />
+
+    <button type="button" id="btnFilterGuru" title="Terapkan filter">
+      <i class="fas fa-search"></i>
+    </button>
+  </form>
+
+  <div class="chart-container">
+    <h2>Statistik Absensi</h2>
+    <canvas id="absensiChartGuru" width="200" height="200"></canvas>
+  </div>
+
+  <div class="table-container">
+    <h2>Daftar Siswa</h2>
+
+    <p id="infoJumlahSiswaGuru"
+       style="margin-bottom:8px; font-weight:500; color:#00796B;">
+      Memuat data siswa...
+    </p>
+
+    <table>
+      <thead>
+      <tr>
+        <th>No</th>
+        <th>ID Siswa</th>
+        <th>Nama Siswa</th>
+        <th>Kelas</th>
+        <th>Status</th>
+        <th>Jam</th>
+      </tr>
+      </thead>
+      <tbody id="activityTableBodyGuru">
+      <tr>
+        <td colspan="6">Memuat data...</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+  /* ====== KONFIGURASI FIREBASE ====== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyCuayRKFrLjWaVcrWBeWZjmA4V_CWPtPcU",
+    authDomain: "presentech-4c4c0.firebaseapp.com",
+    databaseURL: "https://presentech-4c4c0-default-rtdb.firebaseio.com",
+    projectId: "presentech-4c4c0",
+    storageBucket: "presentech-4c4c0.appspot.com",
+    messagingSenderId: "255263820694",
+    appId: "1:255263820694:web:c7dd9f18b5b529cf67abb7"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  // ====== DOM ======
+  const guruNameSpan        = document.getElementById("guruName");
+  const kelasSelectGuru     = document.getElementById("kelasGuru");
+  const filterTanggalGuru   = document.getElementById("filterTanggalGuru");
+  const btnFilterGuru       = document.getElementById("btnFilterGuru");
+  const activityBodyGuru    = document.getElementById("activityTableBodyGuru");
+  const infoJumlahSiswaGuru = document.getElementById("infoJumlahSiswaGuru");
+
+  // ====== STATE ======
+  let attendanceData      = {};   // /attendance
+  let studentsByFingerId  = {};   // finger_id -> { idSiswa, nama }
+  let studentsById        = {};   // idSiswa -> { nama }
+  let siswaKelas          = {};   // id_siswa -> nama_kelas (PHP)
+  let siswaInfo           = {};   // id_siswa -> { nama, nis, nama_kelas } (PHP)
+  let kelasList           = [];   // daftar kelas (PHP)
+  let pieChartInstance    = null;
+  let realtimeStarted     = false;
+
+  /* ====== NAMA GURU ====== */
+  const storedNamaGuru = localStorage.getItem("namaGuru");
+  if (storedNamaGuru) guruNameSpan.textContent = storedNamaGuru;
+
+  async function loadGuruNameFromServer() {
+    try {
+      const res = await fetch("api_guru_profile.php", { credentials: "include" });
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data.success && data.nama_guru) {
+        guruNameSpan.textContent = data.nama_guru;
+        try { localStorage.setItem("namaGuru", data.nama_guru); } catch (e) {}
+      }
+    } catch (err) {
+      console.error("Error fetch api_guru_profile.php:", err);
+    }
+  }
+  loadGuruNameFromServer();
+
+  /* ====== UTIL ====== */
+  function safeStr(v) { return String(v ?? "").trim(); }
+
+  function getTodayString() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function normalizeStatusLabel(raw) {
+    const s = safeStr(raw).toLowerCase();
+    if (!s) return "Hadir";
+    if (s === "hadir") return "Hadir";
+    if (s === "izin")  return "Izin";
+    if (s === "sakit") return "Sakit";
+    if (s === "alpa" || s === "alpha") return "Alpa";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function getTimeFromRecord(rec) {
+    const jam = rec?.time || rec?.jam;
+    if (jam) return String(jam);
+
+    const ts = rec?.timestamp;
+    if (ts && !Number.isNaN(Number(ts))) {
+      try {
+        const d = new Date(Number(ts));
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return `${hh}:${mm}:${ss}`;
+      } catch (_) {}
+    }
+    return "-";
+  }
+
+  // timestamp untuk dedup: prioritas timestamp, fallback jam (HH:MM:SS -> detik)
+  function getRecordTs(rec) {
+    const ts = rec?.timestamp;
+    if (ts && !Number.isNaN(Number(ts))) return Number(ts);
+
+    const jam = safeStr(rec?.time || rec?.jam);
+    const m = jam.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (m) {
+      const hh = Number(m[1] || 0);
+      const mm = Number(m[2] || 0);
+      const ss = Number(m[3] || 0);
+      return (hh * 3600 + mm * 60 + ss) * 1000; // ms supaya comparable
+    }
+    return 0;
+  }
+
+  function getFingerprintNode(dayNode) {
+    if (!dayNode || typeof dayNode !== "object") return {};
+    if (dayNode.fingerprint && typeof dayNode.fingerprint === "object") return dayNode.fingerprint;
+    return dayNode;
+  }
+
+  function getFingerIdFromRec(rec, fallbackKey) {
+    const fid =
+      rec?.finger_id ?? rec?.fingerID ?? rec?.fingerId ??
+      (fallbackKey !== undefined && fallbackKey !== null ? fallbackKey : null);
+    const s = safeStr(fid);
+    return s ? s : null;
+  }
+
+  function isRealAttendanceRecord(rec, fallbackKey) {
+    if (!rec || typeof rec !== "object") return false;
+
+    const fid = getFingerIdFromRec(rec, fallbackKey);
+    if (!fid) return false;
+
+    const mapel = safeStr(rec.mapel || rec.subject || rec.pelajaran);
+    if (mapel && mapel.toUpperCase() === "RFID LOGIN") return false;
+
+    const jam = getTimeFromRecord(rec);
+    if (!jam || jam === "-") return false;
+
+    return true;
+  }
+
+  /* ====== FETCH JSON (multi path) ====== */
+  async function fetchJsonWithFallback(urls) {
+    for (const url of urls) {
+      try {
+        const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), {
+          credentials: "include",
+          cache: "no-store"
+        });
+        if (!res.ok) continue;
+        return await res.json();
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  /* ====== DROPDOWN KELAS ====== */
+  function rebuildKelasOptions() {
+    const selectedBefore = kelasSelectGuru.value;
+
+    while (kelasSelectGuru.options.length > 1) {
+      kelasSelectGuru.remove(1);
+    }
+
+    const setKelas = new Set();
+
+    if (Array.isArray(kelasList)) {
+      kelasList.forEach((k) => { if (safeStr(k)) setKelas.add(safeStr(k)); });
+    }
+
+    Object.values(siswaKelas || {}).forEach((k) => {
+      if (safeStr(k)) setKelas.add(safeStr(k));
+    });
+
+    const arr = Array.from(setKelas).sort((a, b) => a.localeCompare(b, "id"));
+    arr.forEach((kls) => {
+      const opt = document.createElement("option");
+      opt.value = kls;
+      opt.textContent = kls;
+      kelasSelectGuru.appendChild(opt);
+    });
+
+    if (selectedBefore && arr.includes(selectedBefore)) {
+      kelasSelectGuru.value = selectedBefore;
+    }
+  }
+
+  /* ====== CHART ====== */
+  function updatePieChart(dataArr) {
+    const canvas = document.getElementById("absensiChartGuru");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (pieChartInstance) pieChartInstance.destroy();
+
+    pieChartInstance = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: ["Hadir", "Izin", "Sakit", "Alpa"],
+        datasets: [{
+          label: "Jumlah Siswa",
+          data: dataArr,
+          backgroundColor: ["#4CAF50","#FF9800","#2196F3","#F44336"],
+          borderColor: "white",
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" },
+          tooltip: { enabled: true }
+        }
+      }
+    });
+  }
+
+  /* ====== CORE: BUILD DASHBOARD (✅ DEDUP 1 SISWA) ====== */
+  function rebuildDashboardGuru() {
+    const selectedDate = filterTanggalGuru.value || getTodayString();
+    if (!filterTanggalGuru.value) filterTanggalGuru.value = selectedDate;
+
+    const selectedKelas = kelasSelectGuru.value || "";
+
+    const hasAttendance = attendanceData && Object.keys(attendanceData).length > 0;
+    if (!hasAttendance) {
+      activityBodyGuru.innerHTML = `<tr><td colspan="6">Tidak ada data absensi untuk tanggal ${selectedDate}</td></tr>`;
+      infoJumlahSiswaGuru.textContent = `0 siswa tercatat absensi pada ${selectedDate}`;
+      updatePieChart([0,0,0,0]);
+      return;
+    }
+
+    // ✅ DEDUP: simpan record terakhir per siswa
+    const latestByStudent = new Map(); // idSiswa -> { ts, ...row }
+
+    Object.entries(attendanceData).forEach(([tanggalKey, perTanggal]) => {
+      const tanggal = String(tanggalKey ?? "").slice(0, 10);
+      if (tanggal !== selectedDate) return;
+
+      const fpNode = getFingerprintNode(perTanggal);
+
+      Object.entries(fpNode || {}).forEach(([k, rec]) => {
+        if (!isRealAttendanceRecord(rec, k)) return;
+
+        const fingerId = getFingerIdFromRec(rec, k);
+        if (!fingerId) return;
+
+        const idFromRec = safeStr(rec?.id_siswa ?? rec?.idSiswa ?? rec?.student_id ?? rec?.studentId);
+        let idSiswa = idFromRec || (studentsByFingerId[fingerId]?.idSiswa || fingerId);
+
+        const kelas = safeStr(siswaKelas?.[idSiswa] || siswaInfo?.[idSiswa]?.nama_kelas || "-");
+        if (selectedKelas && kelas !== selectedKelas) return;
+
+        // nama prioritas
+        const nama =
+          safeStr(siswaInfo?.[idSiswa]?.nama) ||
+          safeStr(studentsById?.[idSiswa]?.nama) ||
+          safeStr(studentsByFingerId?.[fingerId]?.nama) ||
+          safeStr(rec?.nama || rec?.nama_siswa || rec?.siswa) ||
+          "-";
+
+        // optional: kalau benar-benar "-" dan tidak terdaftar, skip biar rapi
+        if (nama === "-" && !safeStr(siswaInfo?.[idSiswa]?.nama) && !safeStr(studentsById?.[idSiswa]?.nama)) {
+          return;
+        }
+
+        const jam = getTimeFromRecord(rec);
+        const status = normalizeStatusLabel(rec.status || "Hadir");
+        const ts = getRecordTs(rec);
+
+        const prev = latestByStudent.get(idSiswa);
+        if (!prev || ts >= prev.ts) {
+          latestByStudent.set(idSiswa, {
+            ts,
+            id_siswa: idSiswa,
+            nama,
+            kelas,
+            status,
+            jam
+          });
+        }
+      });
+    });
+
+    const records = Array.from(latestByStudent.values());
+
+    // hitung chart berdasarkan data unik
+    let hadir = 0, izin = 0, sakit = 0, alpa = 0;
+    records.forEach(r => {
+      switch (r.status) {
+        case "Hadir": hadir++; break;
+        case "Izin":  izin++;  break;
+        case "Sakit": sakit++; break;
+        case "Alpa":  alpa++;  break;
+        default: hadir++; break;
+      }
+    });
+
+    records.sort((a, b) => {
+      const k1 = String(a.kelas), k2 = String(b.kelas);
+      if (k1 !== k2) return k1.localeCompare(k2, "id");
+      return String(a.nama).localeCompare(String(b.nama), "id");
+    });
+
+    activityBodyGuru.innerHTML = "";
+    if (records.length === 0) {
+      activityBodyGuru.innerHTML = `
+        <tr>
+          <td colspan="6">
+            Tidak ada data absensi untuk tanggal ${selectedDate}${selectedKelas ? " (Kelas " + selectedKelas + ")" : ""}
+          </td>
+        </tr>
+      `;
+    } else {
+      records.forEach((rec, idx) => {
+        const statusClass = String(rec.status || "").toLowerCase();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${rec.id_siswa}</td>
+          <td>${rec.nama}</td>
+          <td>${rec.kelas}</td>
+          <td><span class="status ${statusClass}">${rec.status}</span></td>
+          <td>${rec.jam}</td>
+        `;
+        activityBodyGuru.appendChild(tr);
+      });
+    }
+
+    infoJumlahSiswaGuru.textContent =
+      `${records.length} siswa tercatat absensi pada ${selectedDate}${selectedKelas ? " (Kelas " + selectedKelas + ")" : ""}`;
+
+    updatePieChart([hadir, izin, sakit, alpa]);
+  }
+
+  /* ====== LOAD KELAS + SISWA INFO (PHP) ====== */
+  async function loadKelasFromPHP() {
+    const candidates = [
+      "api_kelas_siswa_guru.php",
+      "../api_kelas_siswa.php",
+      "./../api_kelas_siswa.php"
+    ];
+
+    const data = await fetchJsonWithFallback(candidates);
+    if (!data) {
+      console.error("Semua endpoint kelas gagal diakses (guru).");
+      return;
+    }
+
+    kelasList  = Array.isArray(data.kelas_list) ? data.kelas_list : [];
+    siswaKelas = (data.siswa_kelas && typeof data.siswa_kelas === "object") ? data.siswa_kelas : {};
+    siswaInfo  = (data.siswa_info  && typeof data.siswa_info  === "object") ? data.siswa_info  : {};
+
+    rebuildKelasOptions();
+    rebuildDashboardGuru();
+  }
+
+  /* ====== START REALTIME ====== */
+  function startRealtimeGuru() {
+    if (realtimeStarted) return;
+    realtimeStarted = true;
+
+    if (!filterTanggalGuru.value) filterTanggalGuru.value = getTodayString();
+
+    onValue(ref(db, "students"), (snapshot) => {
+      const studentsData = snapshot.val() || {};
+
+      const byFinger = {};
+      const byId = {};
+
+      Object.entries(studentsData).forEach(([studentId, obj]) => {
+        if (!obj) return;
+
+        const idSiswa = String(studentId);
+        const nama = safeStr(obj.nama || obj.nama_siswa || "");
+        if (nama) byId[idSiswa] = { nama };
+
+        const fid = safeStr(obj.finger_id ?? obj.fingerID ?? obj.fingerId);
+        if (fid) {
+          byFinger[fid] = { idSiswa, nama: nama || "" };
+        }
+      });
+
+      studentsByFingerId = byFinger;
+      studentsById = byId;
+
+      rebuildDashboardGuru();
+    });
+
+    onValue(ref(db, "attendance"), (snapshot) => {
+      attendanceData = snapshot.val() || {};
+      rebuildDashboardGuru();
+    });
+
+    filterTanggalGuru.addEventListener("change", rebuildDashboardGuru);
+    kelasSelectGuru.addEventListener("change", rebuildDashboardGuru);
+    btnFilterGuru.addEventListener("click", rebuildDashboardGuru);
+  }
+
+  /* ====== AUTH ====== */
+  signInAnonymously(auth).catch((error) => {
+    console.error("Gagal anonymous sign-in:", error.code, error.message);
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) startRealtimeGuru();
+  });
+
+  // INIT
+  loadKelasFromPHP();
+</script>
+
+</body>
+</html>

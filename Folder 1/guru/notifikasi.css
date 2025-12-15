@@ -1,0 +1,109 @@
+/* ================================
+   NOTIFIKASI STYLE
+   ================================ */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  background: #E0F2F1;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 250px;
+  background: #009688;
+  color: white;
+  height: 100vh;
+  padding: 20px;
+  position: fixed;
+  top: 0; left: 0;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar h2 {
+  font-size: 22px;
+  margin-bottom: 30px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.sidebar a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  background: #00796B;
+  padding-left: 25px;
+}
+
+.sidebar a.active {
+  background: #004D40;
+  font-weight: 600;
+}
+
+/* ===== CONTENT ===== */
+.content {
+  margin-left: 270px;
+  padding: 40px;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+h1 {
+  color: #004D40;
+  font-size: 28px;
+  margin-bottom: 25px;
+}
+
+/* ===== LIST NOTIFIKASI ===== */
+.notifikasi-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notifikasi-list li {
+  background: white;
+  margin-bottom: 15px;
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.notifikasi-list li:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+}
+
+.pesan {
+  color: #004D40;
+  font-weight: 600;
+}
+
+.waktu {
+  color: #00695C;
+  font-size: 13px;
+}
+
+.no-data {
+  text-align: center;
+  font-style: italic;
+  color: #004D40;
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar {position: relative; width: 100%; height: auto;}
+  .content {margin-left: 0; padding: 20px;}
+}

@@ -1,0 +1,232 @@
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+/* Container utama */
+.container-mapel {
+    width: 90%;
+    max-width: 1000px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+h2 {
+    text-align: center;
+    color: #00695c;
+    margin-bottom: 25px;
+    font-size: 30px; 
+    font-weight: bold;
+}
+
+/* Filter Form */
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+    align-items: center;
+    justify-content: center;
+    background: #e0f2f1;
+    padding: 15px 20px;
+    border-radius: 15px;
+}
+.filter-form label {
+    font-weight: bold;
+    color: #004d40;
+}
+.filter-form select,
+.filter-form input[type="date"] {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    background-color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.filter-form select:hover,
+.filter-form input[type="date"]:hover {
+    border-color: #00796b;
+    box-shadow: 0 0 5px rgba(0,121,107,0.3);
+}
+.btn-submit {
+    background-color: #00796b;
+    color: white;
+    padding: 8px 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-submit:hover {
+    background-color: #004d40;
+}
+
+/* Tabel */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    transition: 0.3s;
+}
+th, td {
+    padding: 12px 15px;
+    text-align: center;
+}
+th {
+    background-color: #00796b;
+    color: white;
+}
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+tr:hover {
+    background-color: #e0f7fa;
+    transition: background 0.3s;
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+}
+.status-badge.hadir { background-color: #4caf50; }
+.status-badge.alpa { background-color: #e53935; }
+.status-badge.sakit { background-color: #2196f3; }
+.status-badge.izin { background-color: #ff9800; }
+
+
+/* Tombol edit */
+.btn-edit {
+    color: #1976d2;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.2s ease-in-out;
+}
+.btn-edit:hover {
+    color: #0d47a1;
+    transform: scale(1.1);
+}
+
+/* Popup */
+.popup-bg {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+.popup-content {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(-10px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* Tombol popup */
+.popup-btns {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+.btn-simpan {
+    background-color: #00796b;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.btn-simpan:hover {
+    background-color: #004d40;
+}
+.btn-batal {
+    background-color: #b0bec5;
+    color: #333;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.btn-batal:hover {
+    background-color: #90a4ae;
+}
+
+/* Highlight baris terbaru setelah edit */
+.highlight-row {
+    background-color: #fff3e0 !important;
+}
+.btn-submit {
+    background-color: #00796b;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-submit:hover {
+    background-color: #004840;
+}
+
+/* Tombol Back bulat hijau (di luar konten sedikit) */
+.btn-back {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background-color: #004d40;
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 18px;
+    transition: 0.3s;
+    z-index: 100;
+}
+
+.btn-back:hover {
+    background-color: #009688;
+}
+
+.btn-back i {
+    line-height: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filter-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    table th, table td {
+        font-size: 14px;
+        padding: 10px 8px;
+    }
+    .popup-content {
+        width: 90%;
+    }
+}
