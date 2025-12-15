@@ -1,172 +1,181 @@
+/* === Gaya Umum === */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #E0F2F1;
+    font-family: Arial, sans-serif;
+    background-color: #E0F2F1; /* hijau muda */
     margin: 0;
     padding: 0;
 }
 
-.container {
-    width: 90%;
-    margin: 40px auto;
-    background: #ffffff;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-h2 {
+header {
+    color: #004D40;
+    padding: 15px;
     text-align: center;
-    margin-bottom: 25px;
-    color: #00796B;
+    font-size: 30px;
+    font-weight: bold;
 }
 
+
+/* === Tombol kembali fixed === */
+.btn-kembali {
+    position: fixed;
+    top: 20px;
+    left: 25px;
+    background-color: #00796B;
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 1000;
+}
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
+/* === Container utama === */
+.container {
+    padding: 20px;
+    max-width: 1100px;
+    margin: 25px auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* === Tombol umum === */
+.btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    display: inline-block;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+/* Tombol Tambah */
+.btn-tambah {
+    background-color: #009688 !important; /* hijau sedang */
+}
+.btn-tambah:hover {
+    background-color: #00796B !important; /* hijau gelap */
+}
+
+/* Tombol Edit */
+.btn-edit {
+    background-color: #015850 !important; /* hijau tua */
+}
+.btn-edit:hover {
+    background-color: #00665a !important; /* hijau medium */
+}
+
+/* Tombol Hapus */
+.btn-hapus {
+    background-color: #D10502 !important; /* merah */
+}
+.btn-hapus:hover {
+    background-color: #c62828 !important; /* merah gelap */
+}
+
+/* === Tabel === */
 table {
     width: 100%;
     border-collapse: collapse;
-    text-align: center;
+    margin-top: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 th {
-    background-color: #00796B;
-    color: white;
-    padding: 10px;
+    background-color: #004D40 !important; /* hijau sedang */
+    color: #fff;
+    padding: 12px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: 2px solid #004D40;
 }
 
 td {
-    padding: 8px;
-    border-bottom: 1px solid #ccc;
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
 }
 
-tr:nth-child(even) {
-    background-color: #f9f9f9;
+tr:nth-child(even) { background-color: #f2f2f2; }
+tr:hover { background-color: #E0F1F1; transition: background-color 0.3s ease; }
+
+
+.aksi a, .aksi button {
+    padding: 6px 12px;        
+    font-size: 14px;           
+    border-radius: 6px;       
+    margin: 0 3px;         
+    display: inline-block;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
+/* === Empty row === */
 .empty {
     text-align: center;
-    color: #888;
     font-style: italic;
+    color: #555;
 }
 
-.back-container {
+/* === Pesan kosong === */
+p {
     text-align: center;
-    margin-top: 20px;
+    font-style: italic;
+    color: #555;
 }
 
-.back-btn {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #00796B;
-    color: #fff;
-    border-radius: 6px;
-    text-decoration: none;
-    transition: 0.3s;
-}
-
-.back-btn:hover {
-    background-color: #004D40;
-}
-
-.btn-container {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.top-bar {
+/* Container search */
+.search-container {
+    position: absolute; /* supaya bisa di kanan atas */
+    top: 20px;
+    right: 20px;
     display: flex;
-    justify-content: flex-start;
-    margin-bottom: 15px;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    padding: 5px 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.btn-tambah {
-    background-color: #2e7d32;
-    color: white;
-    padding: 8px 15px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
+/* Input search */
+.search-container input {
+    border: none;
+    outline: none;
+    padding: 5px;
     font-size: 14px;
-    transition: 0.2s;
+    width: 200px;
 }
 
-.btn-tambah i {
-    margin-right: 6px;
+/* Icon search */
+.search-container .search-icon {
+    margin-left: 5px;
+    font-size: 16px;
+    color: #555;
+    cursor: pointer;
 }
-
-.btn-tambah:hover {
-    background-color: #1b5e20;
-}
-
-/* ==== RESPONSIVE DESIGN UNTUK HP ==== */
+/* === Responsive === */
 @media (max-width: 768px) {
-    .container {
-        width: 95%;
-        padding: 15px;
-        margin: 20px auto;
-    }
-
-    h2 {
-        font-size: 20px;
-    }
-
-    table {
-        display: block;
-        width: 100%;
-        overflow-x: auto;
-        border: none;
-    }
-
-    th, td {
-        font-size: 13px;
-        padding: 6px;
-        white-space: nowrap;
-    }
-
-    .btn-container {
-        text-align: center;
-    }
-
-    .btn-tambah {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 10px 15px;
-        font-size: 13px;
-    }
-
-    .back-btn {
-        display: inline-block;
-        font-size: 13px;
-        padding: 8px 15px;
-    }
-
-    .top-bar {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-    }
-}
-
-/* ==== UNTUK LAYAR KECIL (HP DI BAWAH 480px) ==== */
-@media (max-width: 480px) {
-    h2 {
-        font-size: 18px;
-    }
-
-    th, td {
-        font-size: 12px;
-    }
-
-    .btn-tambah i {
-        margin-right: 4px;
-    }
-
-    .btn-tambah {
-        width: 100%;
-        font-size: 14px;
-    }
-
-    .back-btn {
-        width: 100%;
-        text-align: center;
-    }
+    .container { padding: 15px; width: 90%; }
+    table th, table td { font-size: 13px; padding: 8px; }
+    header { font-size: 20px; }
+    .btn { padding: 5px 10px; font-size: 13px; }
 }

@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Profil berhasil diperbarui.";
             $_SESSION['username'] = $username;
             if ($uploaded_filename) $foto_db = $uploaded_filename;
-            $username_session = $username; // update session untuk form
+            $username_session = $username;
         } else {
             $errors[] = "Gagal memperbarui profil: ".$conn->error;
         }
@@ -78,7 +78,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fungsi URL foto publik
 function public_photo_url($filename){
     return $filename ? 'uploads/admin_photos/'.rawurlencode($filename) : null;
 }
@@ -92,7 +91,12 @@ function public_photo_url($filename){
 <link rel="stylesheet" href="edit_profil_admin.css">
 </head>
 <body>
+
 <div class="password-container">
+
+    <!-- Tombol Back di dalam kotak putih -->
+    <a href="profil_admin.php" class="btn-back" title="Kembali">&#8592;</a>
+
     <h2>Edit Profil Admin</h2>
 
     <?php if($message): ?>
@@ -120,14 +124,12 @@ function public_photo_url($filename){
             <?php else: ?>
                 <img src="data:image/svg+xml;charset=UTF-8,<?php echo rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#e0e0e0"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#888" font-size="12">No Image</text></svg>'); ?>" alt="No Image">
             <?php endif; ?>
-            <!-- Input file + label "Simpan Foto" -->
             <input type="file" name="foto" id="foto" accept=".jpg,.jpeg,.png,.webp">
-            <label id="fotoLabel" style="display:none;color:#00796B;">📌 Klik "Simpan" untuk mengunggah foto</label>
+            <label id="fotoLabel">📌 Klik "Simpan" untuk mengunggah foto</label>
         </div>
 
         <div class="btn-group">
             <button type="submit" class="btn">Simpan</button>
-            <a href="javascript:history.back()" class="btn-back">Kembali</a>
         </div>
     </form>
 </div>

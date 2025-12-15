@@ -1,0 +1,300 @@
+/* =========================
+   Gaya Umum (mirip tampil_hasil_knn.css)
+========================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #E0F2F1;
+  margin: 0;
+  color: #222;
+
+  /* ruang atas agar header + container tidak nabrak tombol kembali + search */
+  padding-top: 85px;
+}
+
+/* =========================
+   Tombol Kembali (FIXED)
+========================= */
+.btn-kembali {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  background-color: #00796B;
+  color: white;
+  font-size: 22px;
+  text-decoration: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  transition: transform 0.2s, background-color 0.3s;
+  z-index: 999;
+}
+
+.btn-kembali:hover {
+  background-color: #03aa8e;
+  transform: scale(1.08);
+}
+
+/* =========================
+   Search Container (ABSOLUTE seperti contoh Anda)
+   - menempel di kanan atas (tapi tidak ikut nabrak isi)
+========================= */
+.search-container {
+  position: absolute;        /* sama seperti tampil_hasil_knn.css */
+  top: 18px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  padding: 6px 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 998;
+}
+
+/* Input search */
+.search-container input {
+  border: none;
+  outline: none;
+  padding: 6px;
+  font-size: 14px;
+  width: 220px;
+}
+
+/* Icon search */
+.search-container .search-icon {
+  margin-left: 6px;
+  font-size: 16px;
+  color: #555;
+  cursor: pointer;
+}
+
+/* =========================
+   Header
+========================= */
+header {
+  text-align: center;
+  font-size: 30px;
+  color: #004D40;
+  font-weight: bold;
+  margin: 0 0 10px;
+}
+
+/* =========================
+   Container utama
+========================= */
+.container {
+  padding: 20px;
+  max-width: 1100px;
+  margin: 18px auto 28px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* =========================
+   FORM (1 halaman: tambah + list)
+   - aman untuk 2 kolom (tidak overlap)
+========================= */
+form {
+  background-color: #F9FBFA;
+  padding: 18px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e6eeeb;
+}
+
+form h3 {
+  margin: 0 0 12px;
+  color: #0b5e58;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* NIP & Nama sejajar */
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-weight: bold;
+  color: #004D40;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #009688;
+  box-shadow: 0 0 0 3px rgba(0,150,136,0.12);
+}
+
+/* No telepon full width */
+.span-2 {
+  grid-column: span 2;
+}
+
+.btn-submit,
+form button {
+  background-color: #009688;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-submit:hover,
+form button:hover {
+  background-color: #004D40;
+  transform: translateY(-1px);
+}
+
+.btn-right {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+/* Pesan */
+.message {
+  text-align: center;
+  font-style: normal;
+  font-weight: bold;
+  margin: 10px 0 0;
+  color: #0a6b53;
+}
+
+/* =========================
+   Tabel
+========================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+th, td {
+  padding: 10px 12px;
+  border: 1px solid #e6eeeb;
+  text-align: center;
+}
+
+th {
+  background: #0b5e58;
+  color: #fff;
+}
+
+tr:nth-child(even) {
+  background-color: #f4fbf9;
+}
+
+tr:hover {
+  background-color: #E0F2F1;
+}
+
+/* Aksi ikon */
+.aksi {
+  white-space: nowrap;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 36px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #fff;
+  margin: 0 4px;
+  transition: transform 0.15s, filter 0.2s;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.98);
+}
+
+.icon-btn.btn-edit {
+  background: #015850;
+}
+
+.icon-btn.btn-hapus {
+  background: #d10502;
+}
+
+/* Pesan kosong */
+.empty {
+  text-align: center;
+  font-style: italic;
+  color: #555;
+  padding: 12px;
+}
+
+/* =========================
+   Responsive
+========================= */
+@media (max-width: 768px) {
+  body { padding-top: 115px; }
+
+  header { font-size: 22px; }
+
+  .container {
+    padding: 15px;
+    width: 92%;
+  }
+
+  /* search jangan nabrak tombol kembali di hp */
+  .search-container {
+    left: 78px;
+    right: 16px;
+  }
+
+  .search-container input {
+    width: 100%;
+  }
+
+  /* form jadi 1 kolom */
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .span-2 {
+    grid-column: auto;
+  }
+
+  th, td {
+    font-size: 13px;
+    padding: 8px;
+  }
+}

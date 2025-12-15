@@ -1,6 +1,7 @@
+/* ===== Halaman & wadah ===== */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #E0F7FA;
+    background-color: #E0F2F1;
     margin: 0;
     padding: 0;
 }
@@ -17,9 +18,10 @@ body {
 
 h2, h3 {
     text-align: center;
-    color: #00796B;
+    color: #004D40;
 }
 
+/* ===== Notifikasi singkat ===== */
 .message {
     text-align: center;
     color: #2E7D32;
@@ -27,6 +29,7 @@ h2, h3 {
     margin-bottom: 15px;
 }
 
+/* ===== Form tambah ===== */
 .form-tambah {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -49,6 +52,12 @@ h2, h3 {
     box-sizing: border-box;
 }
 
+.form-group input:focus {
+    border-color: #00796B;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 121, 107, 0.15);
+}
+
 .btn-center {
     grid-column: span 2;
     text-align: center;
@@ -67,14 +76,11 @@ h2, h3 {
     transition: 0.3s;
 }
 
-.btn-submit i {
-    margin-right: 6px;
-}
+.btn-submit i { margin-right: 6px; }
 
-.btn-submit:hover {
-    background-color: #004D40;
-}
+.btn-submit:hover { background-color: #004D40; }
 
+/* ===== Tabel ===== */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -94,31 +100,39 @@ table th {
     color: white;
 }
 
-table tr:nth-child(even) {
-    background-color: #F1F8E9;
+table tr:nth-child(even) { background-color: #F1F8E9; }
+
+/* ===== Aksi ikon-only ===== */
+.aksi { 
+    text-align: center; 
+    white-space: nowrap; 
 }
 
-.aksi a {
+.icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    color: #fff;
     text-decoration: none;
-    color: #E53935;
-    font-size: 18px;
-    padding: 5px 8px;
+    margin: 0 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transition: transform .12s ease, background-color .2s ease;
+    border: 0;
+    cursor: pointer;
 }
 
-.aksi a:hover {
-    color: #B71C1C;
-}
 
+/* ===== State kosong ===== */
 .empty {
     text-align: center;
     color: #757575;
     font-style: italic;
 }
 
-.back-container {
-    text-align: center;
-    margin-top: 25px;
-}
+/* ===== Tombol kembali (jika dipakai) ===== */
+.back-container { text-align: center; margin-top: 25px; }
 
 .btn-back {
     background-color: #00a1e6e5;
@@ -131,10 +145,85 @@ table tr:nth-child(even) {
     transition: 0.3s;
 }
 
-.btn-back i {
-    margin-right: 6px;
+/* === Tambahan dari inline <style> di tambah_guru.php === */
+
+/* pastikan tombol +Tambah tidak melebar penuh */
+.tambah-btn { 
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #009688;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: max-content;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,150,136,.25);
+  transition: transform .15s, box-shadow .2s, background-color .2s;
+}
+.tambah-btn:hover {
+  background: #00796B;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,77,64,.25);
 }
 
-.btn-back:hover {
-    background-color: #00538f;
+/* tombol aksi ikon-only */
+.aksi .icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  margin: 0 4px;
+  transition: transform .12s, background-color .2s, box-shadow .2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+.icon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+}
+.btn-edit  { background: #015850; }
+.btn-edit:hover  { background: #00665a; }
+.btn-hapus { background: #d10502; }
+.btn-hapus:hover { background: #c62828; }
+
+.btn-back i { margin-right: 6px; }
+.btn-back:hover { background-color: #00538f; }
+
+.btn-kembali {
+    position: fixed;
+    top: 20px;
+    left: 25px;
+    background-color: #00796B;
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 1000;
+}
+
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
+
+/* ===== Responsif ===== */
+@media (max-width: 768px) {
+    .form-tambah { grid-template-columns: 1fr; }
+    .btn-center { grid-column: span 1; }
 }

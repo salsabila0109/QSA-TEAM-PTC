@@ -1,0 +1,228 @@
+/* ===== GLOBAL ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #e5f7f6; /* hijau muda lembut */
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 240px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;        /* tinggi layar */
+  overflow-y: auto;     /* kalau kepanjangan, sidebar bisa di-scroll sendiri */
+  background: #004d40;
+  color: #fff;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  color: #fff;
+  margin: 0;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+}
+
+.sidebar ul li {
+  margin: 8px 0;        /* lebih rapat supaya semua menu muat */
+}
+
+.sidebar ul li a {
+  color: #fff;
+  text-decoration: none;
+  display: block;
+  padding: 8px 14px;    /* sedikit lebih kecil dari sebelumnya */
+  border-radius: 999px;
+  transition: background 0.2s ease;
+  font-size: 15px;
+}
+
+.sidebar ul li a.active {
+  background: #00796b;
+  font-weight: 600;
+}
+
+.sidebar ul li a:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+  margin-left: 240px;
+  padding: 32px;
+}
+
+/* ===== HEADER DASHBOARD ===== */
+#dashboard {
+  text-align: center;
+}
+
+#dashboard h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #00695c;
+  margin: 8px 0 24px;
+}
+
+/* ===== STAT CARDS (Total Kehadiran, Hadir, Izin, Sakit, Alpa) ===== */
+.stats-grid-horizontal-wrapper {
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-top: 20px;
+}
+
+.stats-grid-horizontal {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 0 0 auto;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 14px 26px;
+  text-align: center;
+  min-width: 170px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #004d40;
+}
+
+.stat-number {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #009688;
+}
+
+/* ===== REKAP BOX (di bawah pie) – DISABLED ===== */
+
+/* definisi aslinya boleh tetap ada… */
+#rekap-container {
+  display: none;  /* …tapi di-hide supaya tidak muncul seperti screenshot yang kamu kirim */
+}
+
+/* kalau kamu masih punya .rekap-box, biarkan saja, tidak masalah */
+
+/* ===== RECENT ACTIVITY CARD ===== */
+.recent-activity {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 24px;
+  margin-top: 40px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.recent-activity h3 {
+  color: #00695c;
+  margin: 0 0 12px;
+}
+
+/* ===== TABLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+th,
+td {
+  border: 1px solid #b2dfdb;
+  padding: 10px;
+  text-align: center;
+}
+
+th {
+  background-color: #004d40;
+  color: #ffffff;
+}
+
+/* ===== BUTTON UMUM ===== */
+.btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #ffffff;
+  background: #009688;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+/* ===== FILTER & SEARCH (buat halaman lain) ===== */
+.dashboard-container .filter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+.dashboard-container .filter-row label {
+  white-space: nowrap;
+}
+
+.dashboard-container .filter-row #kelasSelect,
+.dashboard-container .filter-row #mapelSelect {
+  flex: 0 0 220px !important;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  padding: 6px 16px;
+  border: 1px solid #009688;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.dashboard-container .filter-row #tanggalSelect {
+  flex: 0 0 160px !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  height: 36px;
+  padding: 6px 10px;
+  border: 1px solid #009688;
+  border-radius: 5px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .stats-grid-horizontal {
+    gap: 16px;
+  }
+
+  .stat-card {
+    padding: 12px 18px;
+    min-width: 150px;
+  }
+}

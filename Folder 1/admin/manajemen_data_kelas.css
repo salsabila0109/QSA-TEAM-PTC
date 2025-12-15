@@ -1,0 +1,188 @@
+/* Warna utama */
+* { box-sizing: border-box; }
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #E0F2F1;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    color:#004D40;
+    padding: 15px;
+    text-align: center;
+    font-size: 30px;
+    font-weight: bold;
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 30px;
+}
+
+.container {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 20px auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Tabel */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+th {
+    background-color: #004D40;
+    color: #fff;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #E0F2F1;
+}
+
+/* Tombol umum (SERAGAM) */
+.btn {
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #fff;
+    margin: 0 2px;
+    font-weight: bold;
+    font-size: 14px;
+    transition: 0.3s;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    line-height: 1;
+    min-height: 34px;     /* seragam tinggi */
+    white-space: nowrap;  /* tidak pecah 2 baris */
+}
+
+/* Tombol Tambah */
+.btn-tambah {
+    background-color: #009688;
+}
+.btn-tambah:hover {
+    background-color: #004D40;
+}
+
+/* Tombol Edit */
+.btn-edit {
+    background-color: #004D40;
+}
+.btn-edit:hover {
+    background-color: #03aa8e;
+}
+
+/* Tombol Hapus */
+.btn-hapus {
+    background-color: #DC3545;
+}
+.btn-hapus:hover {
+    background-color: #B71C1C;
+}
+
+/* Aksi di tabel (lebih rapi & seragam) */
+.aksi {
+    white-space: nowrap;
+}
+.aksi a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin: 0 3px;
+    color: #fff;
+    text-decoration: none;
+    transition: 0.3s;
+
+    line-height: 1;
+    min-height: 34px;     /* seragam tinggi */
+    white-space: nowrap;
+}
+
+/* Tombol Kembali (seragam) */
+.btn-kembali {
+    position: fixed;
+    top: 18px;
+    left: 20px;
+    background-color: #00796B;
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 999;
+}
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    header { font-size: 22px; margin-bottom: 16px; }
+
+    .container {
+        width: 92%;
+        padding: 15px;
+        overflow-x: auto;     /* biar tabel bisa geser di hp */
+    }
+
+    /* Jangan paksa min-width besar, biarkan alami + scroll bila perlu */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    th, td { font-size: 13px; padding: 8px; }
+
+    .btn, .aksi a {
+        font-size: 13px;
+        padding: 8px 10px;
+        min-height: 32px;
+    }
+
+    .btn-kembali {
+        width: 42px;
+        height: 42px;
+        font-size: 20px;
+        top: 14px;
+        left: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn, .aksi a {
+        font-size: 12px;
+        padding: 7px 9px;
+        min-height: 30px;
+    }
+}

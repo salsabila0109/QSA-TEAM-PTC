@@ -7,14 +7,7 @@ if ($_SESSION['role_pengguna'] != 'admin') {
     exit;
 }
 
-if (isset($_GET['hapus'])) {
-    $id = $_GET['hapus'];
-    $conn->query("DELETE FROM siswa WHERE id_siswa=$id");
-    header("Location: data_siswa.php");
-    exit;
-}
-
-// Ambil data siswa beserta id_kelas (bukan nama)
+// Ambil data siswa beserta id_kelas
 $result = $conn->query("
     SELECT nis, nama_siswa, id_kelas, nomor_telepon_orangtua, id_siswa
     FROM siswa 
@@ -27,38 +20,67 @@ $result = $conn->query("
     <meta charset="UTF-8">
     <title>Manajemen Data Siswa</title>
     <link rel="stylesheet" href="data_siswa.css">
+    <link rel="stylesheet" href="manajemen_data_siswa.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 <div class="container">
-<div class="top-bar">
-    <a href="dashboard_admin.php" class="btn-back"><i class="fa fa-arrow-left"></i></a>
-    <h2 class="title-center">Manajemen Data Siswa</h2>
-    <a href="tambah_siswa.php" class="btn-tambah"><i class="fa fa-plus"></i> Tambah Siswa</a>
+    <div class="top-bar">
+        <h2 class="title-center">Manajemen Data Siswa</h2>
+    </div>
+
+    <!-- ✅ Tombol Back (Floating) -->
+    <a href="../admin/dashboard_admin.html" class="btn-kembali" title="Kembali" aria-label="Kembali">
+    &#8592;
+    </a>
+
+
+    <!-- 🔹 Tabel Data Siswa -->
+    <table>
+        <tr>
+            <th>NIS</th>
+            <th>Nama</th>
+            <th>ID Kelas</th>
+            <th>Telepon Orangtua</th>
+            <th>Aksi</th>
+        </tr>
+        <?php while ($row = $result->fetch_assoc()): ?>
+        <tr>
+            <td><?= htmlspecialchars($row['nis']) ?></td>
+            <td><?= htmlspecialchars($row['nama_siswa']) ?></td>
+            <td><?= htmlspecialchars($row['id_kelas']) ?></td>
+            <td><?= htmlspecialchars($row['nomor_telepon_orangtua']) ?></td>
+            <td>
+                <a href="edit_siswa.php?id=<?= $row['id_siswa'] ?>" class="btn btn-edit">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </a>
+                <a href="javascript:void(0);" onclick="hapusSiswa(<?= $row['id_siswa'] ?>)" class="btn btn-hapus">
+                    <i class="fa-solid fa-trash"></i>
+                </a>
+            </td>
+        </tr>
+        <?php endwhile; ?>
+    </table>
 </div>
 
-<!-- 🔹 Tabel Data Siswa -->
-<table>
-    <tr>
-        <th>NIS</th>
-        <th>Nama</th>
-        <th>Id Kelas</th> <!-- Ubah label jadi Id Kelas -->
-        <th>Telepon Orangtua</th>
-        <th>Aksi</th>
-    </tr>
-    <?php while ($row = $result->fetch_assoc()): ?>
-    <tr>
-        <td><?= $row['nis'] ?></td>
-        <td><?= $row['nama_siswa'] ?></td>
-        <td><?= $row['id_kelas'] ?></td> <!-- Tampilkan Id Kelas -->
-        <td><?= $row['nomor_telepon_orangtua'] ?></td>
-        <td>
-            <a href="edit_siswa.php?id=<?= $row['id_siswa'] ?>" class="btn btn-edit">Edit</a>
-            <a href="data_siswa.php?hapus=<?= $row['id_siswa'] ?>" class="btn btn-hapus" onclick="return confirm('Yakin hapus?')">Hapus</a>
-        </td>
-    </tr>
-    <?php endwhile; ?>
-</table>
-</div>
+<script>
+function hapusSiswa(id) {
+    if (confirm('Yakin ingin menghapus siswa ini?')) {
+        fetch('hapus_siswa.php?id=' + id, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(result => {
+            if (result.trim() === "success") {
+                location.reload();
+            } else {
+                alert('Gagal menghapus data!');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+</script>
 </body>
 </html>

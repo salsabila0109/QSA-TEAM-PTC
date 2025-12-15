@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <title>Notifikasi Kehadiran</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- CSS kamu sendiri -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Tombol Kembali -->
+  <a href="dashboard_admin.html" class="btn-kembali">&#8592;</a>
+
+  <div class="main-content">
+
+    <h2>Notifikasi Kehadiran Siswa</h2>
+
+    <!-- FILTER BAR -->
+    <div class="dashboard-container">
+      <div class="filter-row">
+
+        <label>Kelas
+          <select id="kelasSelect">
+            <option value="">Semua</option>
+          </select>
+        </label>
+
+        <label>Mapel
+          <select id="mapelSelect">
+            <option value="">Semua</option>
+          </select>
+        </label>
+
+        <label>Tanggal
+          <input type="date" id="tanggalSelect">
+        </label>
+
+        <a id="exportLink" href="#">⬇ Export CSV</a>
+
+      </div>
+    </div>
+
+    <!-- RINGKAS FILTER -->
+    <div id="ringkasPilihan">Kelas: — | Mapel: — | Tanggal: —</div>
+
+    <!-- TABLE -->
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>ID Siswa</th>
+          <th>Nama</th>
+          <th>Mapel</th>
+          <th>Tanggal</th>
+          <th>Jam</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="absensiBody">
+        <tr><td colspan="7">Memuat data…</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- FIREBASE JS -->
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCuayRKFrLjWaVcrWBeWZjmA4V_CWPtPcU",
+    authDomain: "presentech-4c4c0.firebaseapp.com",
+    databaseURL: "https://presentech-4c4c0-default-rtdb.firebaseio.com",
+    projectId: "presentech-4c4c0",
+    storageBucket: "presentech-4c4c0.firebasestorage.app",
+    messagingSenderId: "255263820694",
+    appId: "1:255263820694:web:c7dd9f18b5b529cf67abb7"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  // DOM
+  const tbody         = document.getElementById("absensiBody");
+  const kelasSelect   = document.getElementById("kelasSelect");
+  const mapelSelect   = document.getElementById("mapelSelect");
+  const tanggalSelect = document.getElementById("tanggalSelect");
+  const ringkas       = document.getElementById("ringkasPilihan");
+  const exportLink    = document.getElementById("exportLink");
+
+  // STATE
+  let attendanceData   = {}; // /attendance
+  let studentsData     = {}; // /students
+  let siswaKelas       = {}; // id_siswa -> nama_kelas (dari PHP)
+  let siswaInfo        = {}; // id_siswa -> {nama, nis, nama_kelas} (dari PHP)  ✅ tambahan
+  let kelasList        = []; // master kelas (dari PHP)
+  let realtimeStarted  = false;
+
+  function getTodayISO() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function ensureTanggalDefault() {
+    if (!tanggalSelect.value) tanggalSelect.value = getTodayISO();
+  }
+
+  function updateRingkasan() {
+    const kelas = kelasSelect.value || "—";
+    const mapel = mapelSelect.value || "—";
+    const tgl   = tanggalSelect.value || "—";
+    ringkas.textContent = `Kelas: ${kelas} | Mapel: ${mapel} | Tanggal: ${tgl}`;
+  }
+
+  function normalizeStatusLabel(raw) {
+    const s = String(raw || "").trim().toLowerCase();
+    if (!s) return "Hadir";
+    if (s === "hadir") return "Hadir";
+    if (s === "izin")  return "Izin";
+    if (s === "sakit") return "Sakit";
+    if (s === "alpa" || s === "alpha") return "Alpa";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function getTimeFromRecord(rec) {
+    const jam = rec?.time || rec?.jam || "";
+    if (jam) return String(jam);
+
+    const ts = rec?.timestamp;
+    if (ts && !Number.isNaN(Number(ts))) {
+      try {
+        const d = new Date(Number(ts));
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return `${hh}:${mm}:${ss}`;
+      } catch (_) {}
+    }
+    return "-";
+  }
+
+  function getFingerprintNode(perTanggal) {
+    if (!perTanggal || typeof perTanggal !== "object") return {};
+    if (perTanggal.fingerprint && typeof perTanggal.fingerprint === "object") return perTanggal.fingerprint;
+    return {};
+  }
+
+  function getFingerIdFromRec(rec, keyFallback) {
+    const fid =
+      rec?.finger_id ?? rec?.fingerID ?? rec?.fingerId ??
+      (keyFallback !== undefined && keyFallback !== null ? keyFallback : null);
+    if (fid === null || fid === undefined || String(fid).trim() === "") return null;
+    return String(fid);
+  }
+
+  function isRealAttendanceRecord(rec, keyFallback) {
+    if (!rec || typeof rec !== "object") return false;
+
+    const fid = getFingerIdFromRec(rec, keyFallback);
+    if (!fid) return false;
+
+    const jam = getTimeFromRecord(rec);
+    if (!jam || jam === "-") return false;
+
+    const mapel = String(rec.mapel || rec.subject || rec.pelajaran || "").trim();
+    if (!mapel) return false;
+    if (mapel.toUpperCase() === "RFID LOGIN") return false;
+
+    return true;
+  }
+
+  function buildStudentIndexes(studentsObj) {
+    const byFinger = {}; // fid -> { idSiswa, nama }
+    const byId     = {}; // id -> { nama }
+    Object.entries(studentsObj || {}).forEach(([idSiswa, s]) => {
+      if (!s) return;
+      const nama = s?.nama || s?.nama_siswa || "(Tanpa nama)";
+      byId[String(idSiswa)] = { nama };
+
+      const fid = s?.finger_id ?? s?.fingerID ?? s?.fingerId ?? null;
+      if (fid === null || fid === undefined || String(fid).trim() === "") return;
+      byFinger[String(fid)] = { idSiswa: String(idSiswa), nama };
+    });
+    return { byFinger, byId };
+  }
+
+  function resolveStudent(rec, keyFallback, idxByFinger, idxById) {
+    const fid = getFingerIdFromRec(rec, keyFallback);
+    const idFromRec =
+      rec?.id_siswa ?? rec?.idSiswa ?? rec?.student_id ?? rec?.studentId ?? null;
+
+    const mapped = fid ? idxByFinger[fid] : null;
+    const idSiswa = (idFromRec && String(idFromRec).trim() !== "")
+      ? String(idFromRec)
+      : (mapped?.idSiswa || (fid || "-"));
+
+    const nama =
+      idxById[idSiswa]?.nama ||
+      mapped?.nama ||
+      rec?.siswa || rec?.nama || rec?.nama_siswa ||
+      "-";
+
+    return { fid, idSiswa, nama };
+  }
+
+  function rebuildMapelOptionsKeepSelection() {
+    const selectedBefore = mapelSelect.value || "";
+    const set = new Set();
+
+    Object.values(attendanceData || {}).forEach(perTanggal => {
+      const fpNode = getFingerprintNode(perTanggal);
+      Object.entries(fpNode || {}).forEach(([k, rec]) => {
+        if (!isRealAttendanceRecord(rec, k)) return;
+        const m = String(rec.mapel || rec.subject || rec.pelajaran || "").trim();
+        if (m) set.add(m);
+      });
+    });
+
+    mapelSelect.innerHTML = '<option value="">Semua</option>';
+    Array.from(set).sort().forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      mapelSelect.appendChild(opt);
+    });
+
+    if (selectedBefore && Array.from(set).includes(selectedBefore)) {
+      mapelSelect.value = selectedBefore;
+    }
+  }
+
+  // ===== ROSTER MODE =====
+  function getRosterIdsByKelas(namaKelas) {
+    const ids = [];
+    Object.entries(siswaKelas || {}).forEach(([id, kls]) => {
+      if (String(kls) === String(namaKelas)) ids.push(String(id));
+    });
+    return ids;
+  }
+
+  function buildAttendanceIndexForDate(selectedDate, selectedMapel, idxByFinger, idxById) {
+    const out = {};
+    if (!selectedDate) return out;
+
+    let perTanggal = attendanceData?.[selectedDate] || null;
+
+    if (!perTanggal) {
+      const foundKey = Object.keys(attendanceData || {}).find(k => String(k).slice(0,10) === selectedDate);
+      if (foundKey) perTanggal = attendanceData[foundKey];
+    }
+
+    const fpNode = getFingerprintNode(perTanggal);
+
+    Object.entries(fpNode || {}).forEach(([k, rec]) => {
+      if (!isRealAttendanceRecord(rec, k)) return;
+
+      const mapel = String(rec.mapel || rec.subject || rec.pelajaran || "").trim();
+      if (selectedMapel && mapel !== selectedMapel) return;
+
+      const { idSiswa } = resolveStudent(rec, k, idxByFinger, idxById);
+      const id = String(idSiswa || "").trim();
+      if (!id) return;
+
+      const ts = (rec?.timestamp && !Number.isNaN(Number(rec.timestamp))) ? Number(rec.timestamp) : 0;
+      const jam = getTimeFromRecord(rec);
+
+      const status = normalizeStatusLabel(rec?.status || "Hadir");
+
+      if (!out[id] || (ts > (out[id].timestamp || 0))) {
+        out[id] = { mapel: mapel || "-", jam: jam || "-", status, timestamp: ts };
+      }
+    });
+
+    return out;
+  }
+
+  function renderRosterMode(selectedKelas, selectedDate, selectedMapel) {
+    const { byFinger, byId } = buildStudentIndexes(studentsData);
+    const rosterIds = getRosterIdsByKelas(selectedKelas);
+
+    if (rosterIds.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7">Tidak ada siswa pada kelas ${selectedKelas}.</td></tr>`;
+      return;
+    }
+
+    const attendanceIdx = buildAttendanceIndexForDate(selectedDate, selectedMapel, byFinger, byId);
+
+    const rows = rosterIds.map((id) => {
+      // ✅ Prioritas nama: MySQL (siswaInfo) -> Firebase (byId / studentsData) -> "-"
+      const nama =
+        siswaInfo?.[id]?.nama ||
+        byId[id]?.nama ||
+        studentsData?.[id]?.nama ||
+        studentsData?.[id]?.nama_siswa ||
+        "-";
+
+      const hit = attendanceIdx[id];
+
+      const mapelCell = selectedMapel ? selectedMapel : (hit?.mapel || "-");
+      const jamCell   = hit?.jam || "-";
+      const status    = hit ? (hit.status || "Hadir") : "Alpa";
+
+      return {
+        id,
+        nama,
+        mapel: mapelCell,
+        tanggal: selectedDate || "-",
+        jam: jamCell,
+        status
+      };
+    });
+
+    rows.sort((a, b) => String(a.nama).localeCompare(String(b.nama), "id"));
+
+    let html = "";
+    rows.forEach((r, idx) => {
+      html += `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${r.id}</td>
+          <td>${r.nama}</td>
+          <td>${r.mapel}</td>
+          <td>${r.tanggal}</td>
+          <td>${r.jam}</td>
+          <td>${r.status}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  // ===== LOG MODE =====
+  function renderLogMode(selectedDate, selectedMapel, selectedKelas) {
+    const { byFinger, byId } = buildStudentIndexes(studentsData);
+    const records = [];
+
+    Object.entries(attendanceData || {}).forEach(([tanggalKey, perTanggal]) => {
+      const tanggal = String(tanggalKey || "").slice(0, 10);
+      if (selectedDate && tanggal !== selectedDate) return;
+
+      const fpNode = getFingerprintNode(perTanggal);
+
+      Object.entries(fpNode || {}).forEach(([k, rec]) => {
+        if (!isRealAttendanceRecord(rec, k)) return;
+
+        const mapel = String(rec.mapel || rec.subject || rec.pelajaran || "").trim();
+        if (selectedMapel && mapel !== selectedMapel) return;
+
+        const { idSiswa, nama } = resolveStudent(rec, k, byFinger, byId);
+
+        const kelas = siswaKelas[idSiswa] || "-";
+        if (selectedKelas && kelas !== selectedKelas) return;
+
+        const jam = getTimeFromRecord(rec);
+        const ts  = (rec?.timestamp && !Number.isNaN(Number(rec.timestamp))) ? Number(rec.timestamp) : 0;
+
+        const statusLabel = normalizeStatusLabel(rec.status || "Hadir");
+
+        records.push({
+          timestamp: ts,
+          tanggal: selectedDate ? selectedDate : tanggal,
+          id: idSiswa || "-",
+          nama: nama || "-",
+          mapel: mapel || "-",
+          jam: jam || "-",
+          status: statusLabel
+        });
+      });
+    });
+
+    records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    if (records.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='7'>Belum ada data pada filter ini.</td></tr>";
+      return;
+    }
+
+    let html = "";
+    records.forEach((rec, idx) => {
+      html += `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${rec.id}</td>
+          <td>${rec.nama}</td>
+          <td>${rec.mapel}</td>
+          <td>${rec.tanggal}</td>
+          <td>${rec.jam}</td>
+          <td>${rec.status}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  function renderTable() {
+    ensureTanggalDefault();
+
+    const selectedDate  = tanggalSelect.value || "";
+    const selectedMapel = mapelSelect.value || "";
+    const selectedKelas = kelasSelect.value || "";
+
+    if (selectedKelas) {
+      renderRosterMode(selectedKelas, selectedDate, selectedMapel);
+      return;
+    }
+
+    renderLogMode(selectedDate, selectedMapel, selectedKelas);
+  }
+
+  async function loadKelasFromPHP() {
+    try {
+      const res = await fetch("../api_kelas_siswa.php", { credentials: "include" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+
+      const data = await res.json();
+
+      kelasList  = Array.isArray(data.kelas_list) ? data.kelas_list : [];
+      siswaKelas = (data.siswa_kelas && typeof data.siswa_kelas === "object") ? data.siswa_kelas : {};
+      siswaInfo  = (data.siswa_info  && typeof data.siswa_info  === "object") ? data.siswa_info  : {}; // ✅ tambahan
+
+      kelasSelect.innerHTML = '<option value="">Semua</option>';
+      kelasList.forEach(kls => {
+        const opt = document.createElement("option");
+        opt.value = kls;
+        opt.textContent = kls;
+        kelasSelect.appendChild(opt);
+      });
+
+      updateRingkasan();
+      renderTable();
+    } catch (err) {
+      console.error("Gagal load kelas dari PHP:", err);
+    }
+  }
+
+  function startRealtime() {
+    if (realtimeStarted) return;
+    realtimeStarted = true;
+
+    ensureTanggalDefault();
+
+    onValue(ref(db, "students"), (snapshot) => {
+      studentsData = snapshot.val() || {};
+      renderTable();
+    });
+
+    onValue(ref(db, "attendance"), (snapshot) => {
+      attendanceData = snapshot.val() || {};
+      rebuildMapelOptionsKeepSelection();
+      renderTable();
+    }, (error) => {
+      console.error("Gagal baca attendance:", error);
+      tbody.innerHTML =
+        `<tr><td colspan="7">Gagal memuat data: ${error.code || error.message}</td></tr>`;
+    });
+  }
+
+  // AUTH
+  signInAnonymously(auth).catch((error) => {
+    console.error("Gagal anonymous sign-in:", error.code, error.message);
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) startRealtime();
+  });
+
+  // EVENT FILTER
+  kelasSelect.addEventListener("change", () => { updateRingkasan(); renderTable(); });
+  mapelSelect.addEventListener("change", () => { updateRingkasan(); renderTable(); });
+  tanggalSelect.addEventListener("change", () => { updateRingkasan(); renderTable(); });
+
+  // EXPORT CSV
+  function escapeCsvCell(v) {
+    const s = String(v ?? "");
+    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  }
+
+  exportLink.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    const rows = [...tbody.querySelectorAll("tr")];
+    if (rows.length === 0) {
+      alert("Tidak ada data untuk diexport.");
+      return;
+    }
+
+    let csv = "No,ID Siswa,Nama,Mapel,Tanggal,Jam,Status\n";
+
+    rows.forEach((tr) => {
+      const cols = [...tr.querySelectorAll("td")].map(td => td.innerText);
+      if (cols.length === 7 && !cols[0].includes("Belum ada data") && !cols[0].includes("Memuat")) {
+        csv += cols.map(escapeCsvCell).join(",") + "\n";
+      }
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "absensi.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  });
+
+  // INIT
+  ensureTanggalDefault();
+  updateRingkasan();
+  loadKelasFromPHP();
+  </script>
+
+</body>
+</html>

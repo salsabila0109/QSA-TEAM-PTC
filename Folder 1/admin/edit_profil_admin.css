@@ -11,9 +11,33 @@ body {
     width: 380px;
     margin: 60px auto;
     background: #ffffff;
-    padding: 25px 30px;
+    padding: 25px 30px 40px 30px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    position: relative; /* penting supaya tombol Back bisa absolute di dalam kotak */
+}
+
+
+.password-container .btn-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: #00796B;
+    color: #fff;
+    font-size: 20px;
+    text-decoration: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background-color 0.3s;
+}
+
+.password-container .btn-back:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
 }
 
 /* Judul */
@@ -62,17 +86,15 @@ body {
 .message.success { color: green; }
 .message.error { color: red; }
 
-/* Container tombol sejajar */
+/* Container tombol */
 .btn-group {
     display: flex;
-    justify-content: center; /* posisi tengah horizontal */
-    gap: 12px;               /* jarak antar tombol */
+    justify-content: center; 
     margin-top: 20px;
 }
 
-/* Tombol Simpan & Kembali */
-.password-container .btn,
-.password-container .btn-back {
+/* Tombol Simpan */
+.password-container .btn {
     flex: 1;                  
     padding: 12px 0;          
     border-radius: 6px;
@@ -80,28 +102,13 @@ body {
     text-align: center;
     cursor: pointer;
     border: 1px solid #bbb;
-    transition: 0.3s;
-}
-
-/* Warna tombol Simpan */
-.password-container .btn {
     background: #009688;
     color: #fff;
+    transition: 0.3s;
 }
 
 .password-container .btn:hover {
     background: #00796B;
-}
-
-/* Warna tombol Kembali */
-.password-container .btn-back {
-    background-color: #2196F3;
-    color: #fff;
-    text-decoration: none;
-}
-
-.password-container .btn-back:hover {
-    background-color: #0b79d0;
 }
 
 /* Preview foto admin */
@@ -113,14 +120,13 @@ body {
 .preview img {
     width: 120px;
     height: 120px;
-    object-fit: cover;      /* gambar proporsional & terpotong */
-    border-radius: 50%;     /* lingkaran */
+    object-fit: cover;     
+    border-radius: 50%;    
     border: 2px solid #009688;
     display: block;
     margin: 0 auto 10px auto;
 }
 
-/* Label klik simpan foto */
 #fotoLabel {
     display: none;
     color: #00796B;
@@ -139,5 +145,11 @@ body {
     .preview img {
         width: 100px;
         height: 100px;
+    }
+
+    .password-container .btn-back {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
     }
 }

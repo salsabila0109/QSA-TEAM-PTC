@@ -2,48 +2,45 @@
 session_start();
 include '../db.php';
 
-if ($_SESSION['role_pengguna'] != 'admin') {
+// Cek login admin
+if (!isset($_SESSION['role_pengguna']) || $_SESSION['role_pengguna'] != 'admin') {
     header("Location: ../login.php");
     exit;
 }
 
-$result = $conn->query("SELECT a.*, s.nama_siswa, s.kelas 
-                        FROM absensi a 
-                        JOIN siswa s ON a.id_siswa = s.id_siswa 
-                        ORDER BY a.tanggal DESC, a.waktu DESC");
+// Query data absensi terbaru, ambil nama siswa dari tabel siswa
+$result = $conn->query("
+    SELECT s.id_siswa, s.kelas, a.id_mata_pelajaran, a.waktu_absensi_tercatat, a.status
+    FROM absensi_siswa a
+    JOIN siswa s ON a.id_sesi = s.id_sesi
+    ORDER BY a.waktu_absensi_tercatat DESC
+");
+
+if (!$result) {
+    die("Query error: " . $conn->error);
+}
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Pemantauan Kehadiran</title>
-    <link rel="stylesheet" href="absensi.css">
-</head>
-<body>
+
 <div class="dashboard-container">
     <h2>Data Kehadiran Siswa</h2>
     <table>
         <tr>
-            <th>Nama</th>
+            <th>Nama Siswa</th>
             <th>Kelas</th>
             <th>Mata Pelajaran</th>
-            <th>Tanggal</th>
-            <th>Waktu</th>
+            <th>Waktu Absensi</th>
             <th>Status</th>
         </tr>
         <?php while ($row = $result->fetch_assoc()): ?>
         <tr>
-            <td><?= $row['nama_siswa'] ?></td>
-            <td><?= $row['kelas'] ?></td>
-            <td><?= $row['mata_pelajaran'] ?></td>
-            <td><?= $row['tanggal'] ?></td>
-            <td><?= $row['waktu'] ?></td>
-            <td><?= $row['status'] ?></td>
+            <td><?= htmlspecialchars($row['nama_siswa']) ?></td>
+            <td><?= htmlspecialchars($row['kelas']) ?></td>
+            <td><?= htmlspecialchars($row['id_mata_pelajaran']) ?></td>
+            <td><?= htmlspecialchars($row['waktu_absensi_tercatat']) ?></td>
+            <td><?= htmlspecialchars($row['status']) ?></td>
         </tr>
         <?php endwhile; ?>
     </table>
     <br>
-    <a href="export_excel.php" class="btn btn-export">Export ke Excel</a>
+    <a href="export_excel.php" class="btn-export">Export ke Excel</a>
 </div>
-</body>
-</html>

@@ -1,6 +1,7 @@
+/* ===== Body ===== */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #E0F2F1;
+    background: #E0F2F1; /* warna latar belakang halaman */
     margin: 0;
     padding: 0;
 }
@@ -10,33 +11,44 @@ body {
     width: 90%;
     max-width: 1000px;
     margin: 50px auto;
-    background: #ffffff;
+    background: #ffffff; /* latar container */
     border-radius: 12px;
     padding: 25px;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 /* ===== Judul ===== */
 h1 {
     text-align: center;
-    color: #004D40;
+    color: #004D40; /* warna judul */
     margin-bottom: 25px;
-    font-size: 24px;
+    font-size: 35px;
     letter-spacing: 0.5px;
 }
 
-/* ===== Tombol tambah ===== */
+/* Tombol tambah */
 .tambah-btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background-color: #009688;
     color: #fff;
     text-decoration: none;
-    padding: 10px 20px;
+    padding: 8px 12px;
     border-radius: 8px;
     font-weight: 600;
-    margin-bottom: 18px;
+    margin-bottom: 15px;
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0, 150, 136, 0.3);
+
+
+    align-self: flex-start;        
+    width: fit-content;            
+    max-width: max-content;        
+    white-space: nowrap;           
 }
 
 .tambah-btn:hover {
@@ -58,8 +70,8 @@ th, td {
 }
 
 th {
-    background-color: #004D40;
-    color: white;
+    background-color: #004D40; /* header tabel */
+    color: #fff;
     font-weight: 600;
 }
 
@@ -73,9 +85,18 @@ tr:hover {
 }
 
 /* ===== Tombol aksi ===== */
+.action-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
 .edit-btn,
 .hapus-btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     padding: 6px 12px;
     border-radius: 6px;
     color: #fff;
@@ -85,15 +106,15 @@ tr:hover {
 }
 
 .edit-btn {
-    background-color: #009688;
+    background-color: #015850; 
 }
 
 .edit-btn:hover {
-    background-color: #00796B;
+    background-color: #00665a;
 }
 
 .hapus-btn {
-    background-color: #E53935;
+    background-color: #d10502; 
 }
 
 .hapus-btn:hover {
@@ -107,39 +128,35 @@ tr:hover {
     font-style: italic;
 }
 
-.back-btn {
-    display: inline-block;
-    margin-bottom: 15px;
-    padding: 8px 12px;
-    background-color: #3498db;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 14px;
-}
-
-.back-btn i {
-    margin-right: 5px;
-}
-
-.back-btn:hover {
-    background-color: #2980b9;
-}
-
-.btn {
-    display: inline-flex;
+.btn-back {
+    background-color: #00796B;
+    color: #fff;
+    width: 45px;
+    height: 45px;
+    font-size: 22px;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 8px 12px;
-    border-radius: 5px;
-    background-color: #3498db;
-    color: white;
-    border: none;
-    cursor: pointer;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    text-decoration: none;
+    position: absolute; /* di atas container */
+    top: 20px;
+    left: 20px;
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 100;
 }
-.btn:hover {
-    background-color: #2980b9;
+
+.btn-back:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
 }
+
+/* supaya container relatif, agar tombol absolute mengacu ke container */
+.container {
+    position: relative;
+}
+
 
 /* ===== Responsif ===== */
 @media (max-width: 768px) {
@@ -161,24 +178,15 @@ tr:hover {
     }
 
     .tambah-btn {
-        display: block;
-        text-align: center;
-        width: 100%;
-        margin-bottom: 15px;
+        width: auto;
     }
 
     .edit-btn, .hapus-btn {
         padding: 5px 10px;
         font-size: 13px;
     }
+
+    .action-btns {
+        justify-content: center;
+    }
 }
-
-/* ===== Ikon dalam tombol ===== */
-.edit-btn i,
-.hapus-btn i {
-    margin-right: 6px;
-    font-size: 14px;
-    vertical-align: middle;
-}
-
-

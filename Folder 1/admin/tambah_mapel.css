@@ -2,11 +2,35 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: Arial, sans-serif; background:#f5f5f5; color:#333; }
 
+/* Tombol Back Bulat */
+.btn-back {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: #00796b;
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease, background-color 0.3s ease;
+    z-index: 999;
+}
+.btn-back:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
 /* Container */
 .container {
     width: 90%;
     max-width: 500px;
-    margin: 40px auto;
+    margin: 60px auto;
     padding: 20px;
     background: #E0F2F1;
     border-radius: 8px;
@@ -48,13 +72,26 @@ input[type="text"] {
 }
 .btn-simpan:hover { background: #004D40; }
 
-/* Pesan sukses/error */
+/* Pesan sukses/error (lebih terang) */
 .message {
     text-align: center;
-    padding: 8px;
-    background: #a9d6df;
-    color: #004D40;
-    border-radius: 5px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    border: 1px solid transparent;
+}
+
+.message.success {
+    background: #e8f8f0;     /* hijau terang */
+    color: #0a6b53;
+    border-color: #bfead6;
+}
+
+.message.error {
+    background: #ffe9e9;     /* merah terang */
+    color: #a10000;
+    border-color: #ffbcbc;
 }
 
 /* Responsive */

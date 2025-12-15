@@ -2,44 +2,45 @@
 session_start();
 include '../db.php';
 
-// Cek admin login
+// Cek login admin
 if (!isset($_SESSION['role_pengguna']) || $_SESSION['role_pengguna'] !== 'admin') {
     header("Location: ../login.php");
     exit;
 }
 
-// Ambil daftar mapel
+// Ambil semua data mata pelajaran
 $result = $conn->query("SELECT * FROM mata_pelajaran ORDER BY id_mata_pelajaran DESC");
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Data Mata Pelajaran</title>
-<link rel="stylesheet" href="data_mapel.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Data Mata Pelajaran</title>
+    <link rel="stylesheet" href="data_mapel.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 <div class="container">
-    <h1><i class="fas fa-book"></i> Data Mata Pelajaran</h1>
+    <h1><i class="fas fa-book"></i> Manajemen Data Mata Pelajaran</h1>
 
     <!-- Tombol Tambah -->
     <a href="tambah_mapel.php" class="btn btn-tambah"><i class="fas fa-plus"></i> Tambah Mapel</a>
 
-    <!-- Tabel daftar mapel -->
+    <!-- Tabel Data -->
     <table>
         <thead>
             <tr>
                 <th>No</th>
-                <th>Nama Mapel</th>
+                <th>Nama Mata Pelajaran</th>
                 <th>Kode Mapel</th>
                 <th>Aksi</th>
+
             </tr>
         </thead>
         <tbody>
-            <?php if($result->num_rows > 0): $no=1; ?>
-                <?php while($row = $result->fetch_assoc()): ?>
+            <?php if ($result->num_rows > 0): $no = 1; ?>
+                <?php while ($row = $result->fetch_assoc()): ?>
                     <tr>
                         <td><?= $no ?></td>
                         <td><?= htmlspecialchars($row['nama_mapel']) ?></td>
@@ -55,7 +56,7 @@ $result = $conn->query("SELECT * FROM mata_pelajaran ORDER BY id_mata_pelajaran 
                     </tr>
                 <?php $no++; endwhile; ?>
             <?php else: ?>
-                <tr><td colspan="4" style="text-align:center;">Belum ada data mapel</td></tr>
+                <tr><td colspan="4" style="text-align:center;">Belum ada data mata pelajaran</td></tr>
             <?php endif; ?>
         </tbody>
     </table>

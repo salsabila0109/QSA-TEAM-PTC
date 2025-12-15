@@ -1,113 +1,211 @@
-/* ======== Gaya Dasar ======== */
+/* ======= Umum halaman ======= */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #E8F5E9;
+    font-family: Arial, sans-serif;
+    background-color: #E0F2F1;
     margin: 0;
     padding: 0;
 }
 
-/* ======== Container ======== */
+/* ======= Form container ======= */
 .form-container {
-    width: 420px;
-    margin: 60px auto;
-    background: #ffffff;
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-    padding: 30px 35px;
-    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    position: relative;
 }
 
-/* ======== Judul ======== */
 h2 {
     text-align: center;
-    color: #2E7D32;
+    color: #004D40;
     margin-bottom: 20px;
+}
+
+.message {
+    text-align: center;
+    font-weight: bold;
+    color: #2E7D32;
+    margin-bottom: 15px;
+}
+
+/* ======= Tombol kembali seragam ======= */
+.btn-kembali {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #00796B;
+    color: white;
     font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 1000;
 }
 
-h2 i {
-    color: #388E3C;
-    margin-right: 8px;
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
 }
 
-/* ======== Label & Input ======== */
-label {
+/* ======= Form ======= */
+form label {
+    font-weight: 600;
+    margin-top: 10px;
     display: block;
-    font-weight: 500;
     color: #333;
-    margin-bottom: 6px;
 }
 
-input,
-select {
+form input[type="text"] {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 16px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 15px;
+    padding: 8px;
+    margin-top: 4px;
+    border: 1px solid #B2DFDB;
+    border-radius: 5px;
     box-sizing: border-box;
 }
 
-/* ======== Wadah untuk kedua tombol ======== */
+form input[type="text"]:focus {
+    border-color: #00796B;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,121,107,0.15);
+}
+
+/* ======= Tombol simpan ======= */
 .button-group {
+    margin-top: 20px;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    margin-top: 25px;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
-/* ======== Gaya dasar tombol ======== */
-.submit-btn,
-.back-btn {
-    display: inline-flex;          /* Sama untuk a & button */
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 24px;            /* Tinggi & lebar sama */
-    min-width: 160px;
-    height: 48px;                  /* <--- Tambah tinggi tetap */
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    box-sizing: border-box;        /* Pastikan padding dihitung benar */
-}
-
-/* ======== Tombol Hijau ======== */
 .submit-btn {
-    background-color: #28a745;
+    background-color: #00796B;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-.submit-btn:hover {
-    background-color: #218838;
+.submit-btn i { margin-right: 6px; }
+
+.submit-btn:hover { background-color: #004D40; }
+
+/* ======= Tombol aksi ikon-only ======= */
+.aksi {
+    text-align: center;
+    white-space: nowrap;
 }
 
-/* ======== Tombol Biru ======== */
-.back-btn {
-    background-color: #007bff;
+.icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    margin: 0 4px;
+    transition: transform .12s, background-color .2s, box-shadow .2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border: 0;
+    cursor: pointer;
 }
 
-.back-btn:hover {
-    background-color: #0069d9;
+/* Tombol Tambah */
+.btn-tambah {
+    background-color: #009688; /* hijau sedang */
+}
+.btn-tambah:hover {
+    background-color: #004D40; /* hijau gelap */
 }
 
+/* Tombol Edit */
+.btn-edit {
+    background-color: #004D40; /* hijau tua */
+}
+.btn-edit:hover {
+    background-color: #03aa8e; /* hijau medium */
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
 
+/* Tombol Hapus */
+.btn-hapus {
+    background-color: #DC3545; /* merah */
+}
+.btn-hapus:hover {
+    background-color: #B71C1C; /* merah gelap */
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
 
-/* ======== Responsif untuk HP ======== */
-@media (max-width: 600px) {
-    .button-group {
-        flex-direction: column;
-        gap: 10px;
+/* ======= Hasil pencarian siswa ======= */
+.hasil-cari {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    max-height: 180px;
+    overflow-y: auto;
+    margin-top: -5px;
+    margin-bottom: 16px;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 100;
+    position: absolute;
+    width: 100%;
+}
+
+.hasil-item {
+    padding: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.hasil-item:hover {
+    background-color: #E0F2F1;
+    color: #004D40;
+    font-weight: 600;
+}
+
+.hasil-item.kosong {
+    text-align: center;
+    color: #999;
+    cursor: default;
+}
+
+/* ======= Responsif ======= */
+@media (max-width: 768px) {
+    .form-container {
+        width: 90%;
+        margin: 25px auto;
+        padding: 20px;
     }
 
-    .submit-btn,
+    .button-group {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
     .back-btn {
-        width: 90%;
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+        top: 15px;
+        left: 15px;
     }
 }

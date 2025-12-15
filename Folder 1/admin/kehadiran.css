@@ -1,74 +1,161 @@
-body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
+/* === Reset & Base === */
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
 }
 
+body {
+    background: #e9f3ff;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px 15px;
+}
+
+/* === Container Utama === */
 .dashboard-container {
-    width: 90%;
+    width: 100%;
     max-width: 1000px;
-    margin: 20px auto;
-    padding: 20px;
-    background: #E0F2F1;
-    border-radius: 8px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    padding: 30px 40px;
+    position: relative;
 }
 
+/* === Tombol Kembali === */
+.btn-kembali {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    background: #00796b;
+    color: #fff;
+    padding: 10px 10px;
+    border-radius: 50%;
+    font-size: 20px;
+    text-decoration: none;
+    transition: all 0.3s;
+}
 
+.btn-kembali:hover {
+    background: #03aa8e;
+    transform: scale(1.1);
+}
+
+/* === Judul === */
 h2 {
-    color: #00796B;
-    margin-bottom: 15px;
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 25px;
+    color: #00564c;
 }
 
+/* === Alert === */
+.alert {
+    background: #eaf6ff;
+    border-left: 5px solid #00796b;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    color: #03aa8e;
+    font-weight: 500;
+}
 
+/* === Dropdown Tampilan === */
+.view-selector {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.view-selector select {
+    padding: 10px 15px;
+    border-radius: 25px;
+    border: 1px solid #ccc;
+    background: #f7f9fc;
+    color: #333;
+    font-size: 15px;
+    transition: all 0.3s;
+}
+
+.view-selector select:hover {
+    background: #edf5ff;
+    border-color: #03aa8e;
+}
+
+/* === Card === */
+.card {
+    background: #fdfdfd;
+    border-radius: 18px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    padding: 20px 25px;
+    margin-bottom: 25px;
+}
+
+.card h3 {
+    font-size: 18px;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* === Tabel === */
 table {
     width: 100%;
     border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 12px;
 }
 
-table th, table td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-}
-
-table th {
-    background: #009688;
+thead {
+    background: #00796b;
     color: #fff;
 }
 
-table tr:nth-child(even) {
-    background: #f2f2f2;
+th, td {
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 1px solid #eaeaea;
 }
 
+tbody tr:hover {
+    background: #f4f9ff;
+    transition: 0.3s;
+}
 
-@media (max-width: 600px) {
+/* === Tombol Tutup Sesi === */
+.close-btn {
+    background: #bd0000;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 25px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.close-btn:hover {
+    background: #d10b0b;
+    transform: scale(1.05);
+}
+
+/* === Responsif === */
+@media (max-width: 768px) {
     .dashboard-container {
-        width: 95%;
-        padding: 10px;
+        padding: 25px;
     }
-
-    table, th, td {
-        display: block;
+    table {
+        font-size: 13px;
     }
-
-    th {
-        display: none;
-    }
-
-    td {
-        padding-left: 50%;
-        text-align: right;
-        position: relative;
-        margin-bottom: 8px;
-    }
-
-    td::before {
-        content: attr(data-label);
-        position: absolute;
+    .btn-kembali {
         left: 10px;
-        width: 45%;
-        font-weight: bold;
-        text-align: left;
+        top: 10px;
+        padding: 8px 11px;
     }
 }

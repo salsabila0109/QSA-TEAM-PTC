@@ -1,0 +1,107 @@
+/* ======== Warna dasar dan font ======== */
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background-color: #E0F2F1; /* hijau muda lembut */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* ======== Container utama ======== */
+.container {
+    background: #ffffff;
+    padding: 35px 45px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    width: 420px;
+    transition: 0.3s ease;
+}
+
+.container:hover {
+    transform: translateY(-3px);
+}
+
+/* ======== Judul ======== */
+h2 {
+    text-align: center;
+    color: #004D40; /* hijau tua */
+    margin-bottom: 25px;
+    font-size: 22px;
+}
+
+/* ======== Form Group ======== */
+.form-group {
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    color: #004D40;
+    margin-bottom: 6px;
+}
+
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    border-color: #009688;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0,150,136,0.4);
+}
+
+/* ======== Tombol ======== */
+.btn-simpan,
+.btn-kembali {
+    display: inline-block;
+    text-align: center;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    text-decoration: none;
+    color: white;
+    margin-top: 10px;
+}
+
+/* Tombol Simpan */
+.btn-simpan {
+    background-color: #009688; /* hijau sedang */
+}
+
+.btn-simpan:hover {
+    background-color: #00796B;
+}
+
+
+.btn-kembali:hover {
+    background-color: #00695C;
+}
+
+/* ======== Responsif untuk HP ======== */
+@media (max-width: 600px) {
+    .container {
+        width: 90%;
+        padding: 25px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+}

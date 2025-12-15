@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Admin</title>
+
+    <!-- CSS utama dashboard -->
+    <link rel="stylesheet" href="dashboard_admin.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>Admin Panel</h2>
+    <ul>
+        <li>
+            <a href="dashboard_admin.html"
+               class="tablink active"
+               onclick="openTab(event,'dashboard'); return false;">
+                Dashboard
+            </a>
+        </li>
+        <li><a href="tampil_hasil_knn.html">Hasil KNN</a></li>
+        <li><a href="manajemen_data_siswa.html">Manajemen Data Siswa</a></li>
+        <li><a href="manajemen_data_guru.php">Manajemen Data Guru</a></li>
+        <li><a href="manajemen_data_orangtua.php">Manajemen Data Orangtua</a></li>
+        <li><a href="manajemen_data_kelas.php">Manajemen Data Kelas</a></li>
+        <li><a href="manajemen_data_mapel.php">Manajemen Data Mapel</a></li>
+        <li><a href="kehadiran.html">Pemantauan Kehadiran</a></li>
+        <li><a href="notifikasi_kehadiran.html">Notifikasi Kehadiran</a></li>
+        <li><a href="profil_admin.php">Profil Admin</a></li>
+        <li>
+            <a href="logout.php" onclick="return confirm('Apakah Anda yakin ingin logout?')">
+                Logout
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="tabcontent" style="display:block;">
+
+        <h2>
+            Selamat Datang Admin,
+            <b><span id="adminName">Admin</span></b> 👋
+        </h2>
+
+        <!-- Statistik Kehadiran (CARD) -->
+        <div class="stats-grid-horizontal-wrapper">
+            <div class="stats-grid-horizontal">
+                <div class="stat-card">
+                    <h3>Total Kehadiran</h3>
+                    <div class="stat-number" id="total-kehadiran">0%</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Hadir</h3>
+                    <div class="stat-number" id="hadir">0/0</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Izin</h3>
+                    <div class="stat-number" id="izin">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Sakit</h3>
+                    <div class="stat-number" id="sakit">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Alpa</h3>
+                    <div class="stat-number" id="alpa">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie Chart -->
+        <div style="width:250px; height:250px; margin:20px auto;">
+            <canvas id="pieChart"></canvas>
+        </div>
+
+        <!-- Box rekap angka -->
+        <div id="rekap-container">
+            <div class="rekap-box" id="rekap-hadir">Hadir: 0</div>
+            <div class="rekap-box" id="rekap-izin">Izin: 0</div>
+            <div class="rekap-box" id="rekap-sakit">Sakit: 0</div>
+            <div class="rekap-box" id="rekap-alpa">Alpa: 0</div>
+        </div>
+
+        <!-- Aktivitas Absensi Terbaru -->
+        <div class="recent-activity">
+            <h3>Aktivitas Absensi Siswa</h3>
+
+            <!-- Filter Tanggal -->
+            <div style="margin-bottom:15px; text-align:right;">
+                <label for="filterTanggal"><b>Pilih Tanggal:</b></label>
+                <input
+                    type="date"
+                    id="filterTanggal"
+                    style="padding:6px 10px; border:1px solid #007165ff; border-radius:6px;"
+                >
+                <!-- Info jumlah siswa -->
+                <p id="infoJumlahSiswa"
+                   style="margin-top:8px; font-weight:500; color:#00796B; text-align:left;">
+                    📅 Memuat data siswa...
+                </p>
+            </div>
+
+            <!-- Tabel Aktivitas -->
+            <table>
+                <thead>
+                <tr>
+                    <th>ID Siswa</th>
+                    <th>Nama Siswa</th>
+                    <th>Jam</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody id="activityTableBody">
+                <!-- Diisi dari Firebase -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB: Hasil KNN (placeholder) -->
+    <div id="knn" class="tabcontent" style="display:none;">
+        <h3 style="margin:0 0 12px; text-align:center;">
+            Klasifikasi KNN Absensi — Tabel Semester
+        </h3>
+        <p class="keterangan info">
+            (Versi HTML) Bagian ini masih placeholder.<br>
+            Kalau mau, nanti bisa dipindahkan dari PHP ke JavaScript + Firebase.
+        </p>
+
+        <div style="overflow-x:auto; background:#fff; border-radius:12px; padding:16px; box-shadow:0 2px 6px rgba(0,0,0,.06);">
+            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <thead>
+                <tr style="background:#00796B; color:#fff;">
+                    <th style="padding:10px; border:1px solid #B2DFDB; width:80px;">No</th>
+                    <th style="padding:10px; border:1px solid #B2DFDB; text-align:left;">Nama Siswa</th>
+                    <th style="padding:10px; border:1px solid #B2DFDB;">Jumlah Hadir (semester)</th>
+                    <th style="padding:10px; border:1px solid #B2DFDB;">Prediksi (KNN)</th>
+                </tr>
+                </thead>
+                <tbody id="knnTableBody">
+                <tr>
+                    <td colspan="4" style="padding:12px; border:1px solid #B2DFDB; text-align:center;">
+                        Belum ada data – KNN belum diimplementasikan di JavaScript.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top:14px;">
+                <a class="btn" href="#">Download Excel (belum aktif di HTML)</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tetap load CSS ekstra kalau perlu -->
+    <link rel="stylesheet" href="manajemen_data_mapel.css">
+
+</div>
+
+<!-- Script TAB (bukan module, biar bisa dipanggil dari onclick) -->
+<script>
+function openTab(evt, tabName) {
+    const tabcontent = document.getElementsByClassName("tabcontent");
+    const tablinks   = document.getElementsByClassName("tablink");
+
+    for (let i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    for (let i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+}
+</script>
+
+<!-- Firebase + Logika Dashboard (Realtime from /students & /attendance) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    /* ====== KONFIGURASI FIREBASE ====== */
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuayRKFrLjWaVcrWBeWZjmA4V_CWPtPcU",
+        authDomain: "presentech-4c4c0.firebaseapp.com",
+        databaseURL: "https://presentech-4c4c0-default-rtdb.firebaseio.com",
+        projectId: "presentech-4c4c0",
+        storageBucket: "presentech-4c4c0.appspot.com",
+        messagingSenderId: "255263820694",
+        appId: "1:255263820694:web:c7dd9f18b5b529cf67abb7"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const db   = getDatabase(app);
+    const auth = getAuth(app);
+
+    // ====== DOM ELEMENTS ======
+    const totalKehadiranEl = document.getElementById("total-kehadiran");
+    const hadirEl          = document.getElementById("hadir");
+    const izinEl           = document.getElementById("izin");
+    const sakitEl          = document.getElementById("sakit");
+    const alpaEl           = document.getElementById("alpa");
+
+    const rekapHadirEl = document.getElementById("rekap-hadir");
+    const rekapIzinEl  = document.getElementById("rekap-izin");
+    const rekapSakitEl = document.getElementById("rekap-sakit");
+    const rekapAlpaEl  = document.getElementById("rekap-alpa");
+
+    const activityBody    = document.getElementById("activityTableBody");
+    const infoJumlahSiswa = document.getElementById("infoJumlahSiswa");
+    const filterTanggal   = document.getElementById("filterTanggal");
+    const adminNameSpan   = document.getElementById("adminName");
+
+    // ====== STATE ======
+    let studentsData     = {}; // /students
+    let attendanceData   = {}; // /attendance
+    let pieChartInstance = null;
+    let realtimeStarted  = false;
+
+    function getTodayString() {
+        const d = new Date();
+        const year  = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day   = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function normalizeStatusLabel(raw) {
+        const s = String(raw || "").trim().toLowerCase();
+        if (!s) return "Hadir";
+        if (s === "hadir") return "Hadir";
+        if (s === "izin")  return "Izin";
+        if (s === "sakit") return "Sakit";
+        if (s === "alpa" || s === "alpha") return "Alpa";
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    function parseDateKeyToISO(keyRaw) {
+        const key = String(keyRaw || "").trim();
+        if (!key) return null;
+        const k10 = key.length >= 10 ? key.slice(0, 10) : key;
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(k10)) return k10;
+        if (/^\d{4}\/\d{2}\/\d{2}$/.test(k10)) return k10.replaceAll("/", "-");
+
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(k10)) {
+            const [dd, mm, yyyy] = k10.split("/");
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        if (/^\d{2}-\d{2}-\d{4}$/.test(k10)) {
+            const [dd, mm, yyyy] = k10.split("-");
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        return null;
+    }
+
+    function resolveDayNode(attData, selectedISO) {
+        if (!attData || typeof attData !== "object") return {};
+        if (attData[selectedISO]) return attData[selectedISO];
+
+        for (const [k, v] of Object.entries(attData)) {
+            const iso = parseDateKeyToISO(k);
+            if (iso && iso === selectedISO) return v || {};
+        }
+        return {};
+    }
+
+    // Hanya baca fingerprint
+    function getFingerprintNode(perTanggal) {
+        if (!perTanggal || typeof perTanggal !== "object") return {};
+        if (perTanggal.fingerprint && typeof perTanggal.fingerprint === "object") return perTanggal.fingerprint;
+        return {};
+    }
+
+    function getTimeFromRecord(rec) {
+        const jam = rec?.time || rec?.jam || "";
+        if (jam) return String(jam);
+
+        const ts = rec?.timestamp;
+        if (ts && !Number.isNaN(Number(ts))) {
+            try {
+                const d = new Date(Number(ts));
+                const hh = String(d.getHours()).padStart(2, "0");
+                const mm = String(d.getMinutes()).padStart(2, "0");
+                const ss = String(d.getSeconds()).padStart(2, "0");
+                return `${hh}:${mm}:${ss}`;
+            } catch (_) {}
+        }
+        return "";
+    }
+
+    function timeToSeconds(hms) {
+        const s = String(hms || "").trim();
+        const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+        if (!m) return 0;
+        const hh = Number(m[1] || 0);
+        const mm = Number(m[2] || 0);
+        const ss = Number(m[3] || 0);
+        return hh * 3600 + mm * 60 + ss;
+    }
+
+    function getFingerIdFromRec(rec, keyFallback) {
+        const fid =
+            rec?.finger_id ?? rec?.fingerID ?? rec?.fingerId ??
+            (keyFallback !== undefined && keyFallback !== null ? keyFallback : null);
+        if (fid === null || fid === undefined || String(fid).trim() === "") return null;
+        return String(fid);
+    }
+
+    // absensi valid (fingerprint siswa) => wajib mapel & jam/timestamp
+    function isRealAttendanceRecord(rec, keyFallback) {
+        if (!rec || typeof rec !== "object") return false;
+
+        const fid = getFingerIdFromRec(rec, keyFallback);
+        if (!fid) return false;
+
+        const jam = getTimeFromRecord(rec);
+        if (!jam) return false;
+
+        const mapel = String(rec.mapel || rec.subject || rec.pelajaran || "").trim();
+        if (!mapel) return false;
+        if (mapel.toUpperCase() === "RFID LOGIN") return false;
+
+        return true;
+    }
+
+    function buildStudentIndexes(studentsObj) {
+        const byFinger = {}; // fid -> { idSiswa, nama }
+        const byId     = {}; // id -> { nama }
+        Object.entries(studentsObj || {}).forEach(([idSiswa, s]) => {
+            if (!s) return;
+            const nama = s?.nama || s?.nama_siswa || "(Tanpa nama)";
+            byId[idSiswa] = { nama };
+
+            const fid = s?.finger_id ?? s?.fingerID ?? s?.fingerId ?? null;
+            if (fid === null || fid === undefined || String(fid).trim() === "") return;
+            byFinger[String(fid)] = { idSiswa, nama };
+        });
+        return { byFinger, byId };
+    }
+
+    function resolveStudent(rec, keyFallback, idxByFinger, idxById) {
+        const fid = getFingerIdFromRec(rec, keyFallback);
+        const idFromRec =
+            rec?.id_siswa ?? rec?.idSiswa ?? rec?.student_id ?? rec?.studentId ?? null;
+
+        const mapped = fid ? idxByFinger[fid] : null;
+        const idSiswa = (idFromRec && String(idFromRec).trim() !== "")
+            ? String(idFromRec)
+            : (mapped?.idSiswa || (fid || "-"));
+
+        const nama =
+            idxById[idSiswa]?.nama ||
+            mapped?.nama ||
+            rec?.siswa || rec?.nama || rec?.nama_siswa ||
+            "-";
+
+        return { fid, idSiswa, nama };
+    }
+
+    function rebuildDashboard() {
+        const storedAdminName = localStorage.getItem("adminName");
+        if (adminNameSpan) adminNameSpan.textContent = storedAdminName || "Admin";
+
+        if (!filterTanggal.value) {
+            filterTanggal.value = getTodayString();
+        }
+        const tglDipilih = filterTanggal.value;
+
+        const dayNode = resolveDayNode(attendanceData, tglDipilih);
+        const fpNode  = getFingerprintNode(dayNode);
+
+        const { byFinger, byId } = buildStudentIndexes(studentsData);
+
+        // =========================================================
+        // PERBAIKAN: dedup -> 1 siswa hanya 1 record (ambil yang TERBARU)
+        // =========================================================
+        const latestBySiswa = new Map(); // key=id_siswa (fallback: fid) -> act
+
+        Object.entries(fpNode || {}).forEach(([k, rec]) => {
+            if (!isRealAttendanceRecord(rec, k)) return;
+
+            const { idSiswa, nama, fid } = resolveStudent(rec, k, byFinger, byId);
+
+            const jam   = getTimeFromRecord(rec) || "-";
+            const st    = normalizeStatusLabel(rec.status || "Hadir");
+            const mapel = String(rec.mapel || rec.subject || rec.pelajaran || "").trim();
+
+            const ts = rec?.timestamp;
+            const orderVal =
+                (ts && !Number.isNaN(Number(ts))) ? Number(ts) : timeToSeconds(jam);
+
+            const keyUniq = String(idSiswa && idSiswa !== "-" ? idSiswa : (fid || k));
+
+            const prev = latestBySiswa.get(keyUniq);
+            if (!prev || orderVal > (prev._orderVal || 0)) {
+                latestBySiswa.set(keyUniq, {
+                    id_siswa: idSiswa,
+                    name: nama,
+                    time: jam,
+                    status: st,
+                    _orderVal: orderVal,
+                    _mapel: mapel
+                });
+            }
+        });
+
+        const rows = Array.from(latestBySiswa.values());
+        rows.sort((a, b) => (b._orderVal - a._orderVal));
+
+        // Hitung statistik dari data yang SUDAH unik per siswa
+        let hadir = 0, izin = 0, sakit = 0, alpa = 0;
+        rows.forEach(r => {
+            if (r.status === "Hadir") hadir++;
+            else if (r.status === "Izin") izin++;
+            else if (r.status === "Sakit") sakit++;
+            else if (r.status === "Alpa") alpa++;
+        });
+
+        // Render tabel (unik)
+        activityBody.innerHTML = "";
+        if (rows.length === 0) {
+            activityBody.innerHTML = `
+                <tr>
+                    <td colspan="4">Tidak ada data absensi untuk tanggal ${tglDipilih}</td>
+                </tr>
+            `;
+        } else {
+            rows.forEach((act) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${act.id_siswa}</td>
+                    <td>${act.name}</td>
+                    <td>${act.time}</td>
+                    <td>${act.status}</td>
+                `;
+                activityBody.appendChild(tr);
+            });
+        }
+
+        if (infoJumlahSiswa) {
+            infoJumlahSiswa.textContent =
+                `📅 Total siswa tercatat: ${rows.length} pada ${tglDipilih}`;
+        }
+
+        const totalRecords = rows.length; // sekarang = jumlah siswa unik
+        const persenHadir = totalRecords > 0 ? Math.round((hadir / totalRecords) * 100) : 0;
+
+        totalKehadiranEl.textContent = persenHadir + "%";
+        hadirEl.textContent          = `${hadir}/${totalRecords}`;
+        izinEl.textContent           = izin;
+        sakitEl.textContent          = sakit;
+        alpaEl.textContent           = alpa;
+
+        rekapHadirEl.textContent = `Hadir: ${hadir}`;
+        rekapIzinEl.textContent  = `Izin: ${izin}`;
+        rekapSakitEl.textContent = `Sakit: ${sakit}`;
+        rekapAlpaEl.textContent  = `Alpa: ${alpa}`;
+
+        const pieData = [hadir, izin, sakit, alpa];
+        const canvas = document.getElementById("pieChart");
+        if (canvas) {
+            const ctx = canvas.getContext("2d");
+            if (pieChartInstance) pieChartInstance.destroy();
+            pieChartInstance = new Chart(ctx, {
+                type: "pie",
+                data: {
+                    labels: ["Hadir", "Izin", "Sakit", "Alpa"],
+                    datasets: [{
+                        data: pieData,
+                        backgroundColor: ["#4CAF50", "#FF9800", "#2196F3", "#F44336"]
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+    }
+
+    function startRealtime() {
+        if (realtimeStarted) return;
+        realtimeStarted = true;
+
+        if (filterTanggal && !filterTanggal.value) filterTanggal.value = getTodayString();
+
+        onValue(ref(db, "students"), (snapshot) => {
+            studentsData = snapshot.val() || {};
+            rebuildDashboard();
+        });
+
+        onValue(ref(db, "attendance"), (snapshot) => {
+            attendanceData = snapshot.val() || {};
+            rebuildDashboard();
+        });
+
+        if (filterTanggal) {
+            filterTanggal.addEventListener("change", () => rebuildDashboard());
+        }
+    }
+
+    signInAnonymously(auth).catch((error) => {
+        console.error("Gagal anonymous sign-in:", error.code, error.message);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) startRealtime();
+    });
+</script>
+
+</body>
+</html>

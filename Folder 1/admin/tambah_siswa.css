@@ -12,15 +12,15 @@ body {
 
 
 header {
-    background: #00796B;  
-    color: #fff;
-    padding: 15px 20px;
-    font-size: 20px;
+    background: none;        /* hapus kotak hijau */
+    color: #00695C;          /* hijau tua */
+    padding: 15px 0;         /* bisa dikurangi */
+    font-size: 28px;
     font-weight: bold;
     text-align: center;
-    letter-spacing: 1px;
-    border-bottom: 4px solid #004D40;
 }
+
+
 
 
 .container {
@@ -99,10 +99,68 @@ input {
     display: inline-block;
 }
 
-.btn-tambah-siswa:hover {
-    background: #333333;  
+/* === Tombol Kembali (ikon bulat biru) === */
+.btn-kembali {
+    position: fixed;
+    top: 18px;
+    left: 20px;
+    background-color: #00796B; 
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 999;
 }
 
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
+/* === Pesan kosong === */
+p {
+    text-align: center;
+    font-style: italic;
+    color: #555;
+}
+
+/* Container search */
+.search-container {
+    position: absolute; /* supaya bisa di kanan atas */
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    padding: 5px 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Input search */
+.search-container input {
+    border: none;
+    outline: none;
+    padding: 5px;
+    font-size: 14px;
+    width: 200px;
+}
+
+/* Icon search */
+.search-container .search-icon {
+    margin-left: 5px;
+    font-size: 16px;
+    color: #555;
+    cursor: pointer;
+}
 
 @media (max-width: 600px) {
     .btn-group {

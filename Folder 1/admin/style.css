@@ -1,0 +1,117 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f3f6fa;
+}
+
+/* Tombol Kembali */
+.btn-kembali {
+    position: fixed;
+    top: 18px;
+    left: 20px;
+    background-color: #00796B;
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 999;
+}
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
+/* MAIN CONTENT */
+.main-content {
+    padding: 30px;
+    padding-top: 90px; /* supaya tidak nabrak tombol kembali */
+}
+
+h2 {
+    margin-top: 0;
+    color: #0b5e58;
+    text-align: center;  
+}
+
+/* FILTER BAR */
+.dashboard-container {
+    margin-top: 10px;
+    margin-bottom: 18px;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+}
+
+.filter-row label {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.filter-row select,
+.filter-row input {
+    margin-top: 4px;
+    padding: 6px;
+    font-size: 14px;
+}
+
+/* EXPORT BUTTON */
+#exportLink {
+    margin-left: auto;
+    padding: 8px 14px;
+    background: #00796B;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: 0.2s;
+}
+#exportLink:hover {
+    background: #03aa8e;
+}
+
+/* RINGKAS FILTER */
+#ringkasPilihan {
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #475569;
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+table thead {
+    background: #00796B;
+    color: white;
+}
+
+table th, 
+table td {
+    padding: 12px;
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+

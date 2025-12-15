@@ -1,149 +1,177 @@
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* Warna utama */
 body {
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    color: #333;
+    background-color: #E0F2F1; /* hijau muda */
+    margin: 0;
+    padding: 0;
 }
 
 
-header {
-    background: #00796B;
-    color: #fff;
-    padding: 15px 20px;
-    font-size: 22px;
+.topbar {
+    color: #004D40;
+    font-family: Arial, sans-serif;
+    padding: 10px 20px;
     font-weight: bold;
-    text-align: center;
+    display: flex;
+    font-size: 30px;
+    justify-content: center; /* <== ini yang bikin teks di tengah */
+    align-items: center;      /* <== biar sejajar vertikal */
 }
+
 
 
 .container {
-    width: 90%;
+    padding: 20px;
     max-width: 1000px;
-    margin: 20px auto;
-    padding: 15px;
-    background: #E0F2F1;
+    margin: 30px auto;
+    background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    font-size: 17px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Tabel */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: #004D40; /* hijau gelap */
+    color: #fff;
+}
+
+/* Tombol Kembali */
+.btn-kembali {
+    position: fixed;
+    top: 18px;
+    left: 20px;
+    background-color: #00796B;
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 999;
+}
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
+/* Container harus relative supaya search absolute bekerja */
+.container {
+    position: relative;  /* PENTING! */
+    padding: 20px;
+    max-width: 1000px;
+    margin: 30px auto;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 17px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Judul tetap di tengah */
+.judul {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 40px; /* beri jarak agar search tidak menutupi */
+}
+
+/* Search container bulat di kanan atas */
+.search-container {
+    position: absolute;   /* supaya bisa di kanan atas */
+    top: 10px;            /* jarak dari atas container */
+    right: 10px;          /* nempel kanan */
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 25px;  /* bulat */
+    padding: 5px 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+/* Input search */
+.search-container input {
+    border: none;
+    outline: none;
+    padding: 5px;
+    font-size: 14px;
+    width: 200px;
+}
+
+/* Icon search */
+.search-container .search-icon {
+    margin-left: 5px;
+    font-size: 16px;
+    color: #555;
+    cursor: pointer;
 }
 
 
+/* Tombol */
 .btn {
-    display: inline-block;
-    padding: 8px 14px;
-    border-radius: 4px;
+    padding: 5px 10px;
+    border-radius: 5px;
     text-decoration: none;
     color: #fff;
+    margin: 0 2px;
     font-weight: bold;
     transition: 0.3s;
 }
 
 .btn-tambah {
-    background: #009688;
-    margin-bottom: 10px;
+    background-color: #009688; 
 }
 
 .btn-tambah:hover {
-    background: #00796B;
+    background-color: #004D40; 
 }
 
 .btn-edit {
-    background: #4CAF50;
+    background-color: #015850;
 }
 
 .btn-edit:hover {
-    background: #388E3C;
+    background-color: #00665a;
 }
 
 .btn-hapus {
-    background: #F44336;
+    background-color: #d10502; /* merah */
 }
 
 .btn-hapus:hover {
-    background: #D32F2F;
+    background-color: #c62828; /* merah gelap */
+}
+
+/* Aksi di tabel */
+.aksi a {
+    display: inline-block;
 }
 
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
 
-table th, table td {
-    border: 1px solid #ccc;
-    padding: 10px;
-    text-align: center;
-}
-
-table th {
-    background: #009688;
-    color: #fff;
-}
-
-table tr:nth-child(even) {
-    background: #f2f2f2;
-}
-
-
-.btn-tambah-siswa {
-    background: #000000;  /* warna hitam */
-    color: #fff;
-    border: none;
+/* ===== Header ===== */
+.header {
+    display: flex;
+    align-items: center;
     padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: 0.2s ease-in-out;
-}
-
-.btn-tambah-siswa:hover {
-    background: #333333;  
-}
-
-
-
-@media (max-width: 600px) {
-
-    
-    .container {
-        width: 95%;
-        padding: 10px;
-    }
-
-    
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-
-    table th, table td {
-        padding: 8px;
-        font-size: 14px;
-    }
-
-    
-    .btn {
-        padding: 6px 10px;
-        font-size: 13px;
-    }
-
-    .btn-tambah {
-        display: block;
-        width: 100%;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .aksi .btn {
-        display: inline-block;
-        margin-bottom: 5px;
-    }
+    background-color: #333;
+    color: white;
 }

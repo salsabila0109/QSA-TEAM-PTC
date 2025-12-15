@@ -76,12 +76,26 @@ form select:focus {
     background-color: #00796B;
 }
 
-/* Back Button */
-.btn-back {
-    background-color: #ccc;
-    color: #333;
+/* Tombol Kembali */
+.btn-kembali {
+    position: fixed;
+    top: 18px;
+    left: 20px;
+    background-color: #00796B;
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 999;
 }
-
-.btn-back:hover {
-    background-color: #b0b0b0;
+.btn-kembali:hover {
+    background-color: #1976D2;
+    transform: scale(1.08);
 }

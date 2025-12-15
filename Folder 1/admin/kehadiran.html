@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pemantauan Kehadiran Siswa</title>
+
+  <link rel="stylesheet" href="kehadiran.css">
+</head>
+<body>
+<div class="dashboard-container">
+
+  <!-- Tombol Kembali -->
+  <a href="javascript:history.back()" class="btn-kembali" title="Kembali">&#8592;</a>
+
+  <h2>Pemantauan Kehadiran Siswa</h2>
+
+  <!-- Filter Tanggal -->
+  <div class="view-selector" style="margin-bottom: 16px;">
+    <label for="tanggalSelect"><b>Tanggal Kehadiran:</b></label>
+    <input
+      type="date"
+      id="tanggalSelect"
+      style="padding:6px 10px; border-radius:6px; border:1px solid #0a6b5a;"
+    >
+  </div>
+
+  <!-- Card Data -->
+  <div class="card">
+    <h3>📋 Data Kehadiran Siswa</h3>
+
+    <p id="infoRingkas" style="margin-bottom:10px;">
+      Memuat data kehadiran...
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID Siswa</th>
+          <th>Nama Siswa</th>
+          <th>Mapel</th>
+          <th>Status</th>
+          <th>Waktu</th>
+        </tr>
+      </thead>
+      <tbody id="kehadiranBody">
+        <tr>
+          <td colspan="5">Memuat data...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ================== FIREBASE & LOGIKA KEHADIRAN ================== -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCuayRKFrLjWaVcrWBeWZjmA4V_CWPtPcU",
+    authDomain: "presentech-4c4c0.firebaseapp.com",
+    databaseURL: "https://presentech-4c4c0-default-rtdb.firebaseio.com",
+    projectId: "presentech-4c4c0",
+    storageBucket: "presentech-4c4c0.firebasestorage.app",
+    messagingSenderId: "255263820694",
+    appId: "1:255263820694:web:c7dd9f18b5b529cf67abb7"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  const tbody        = document.getElementById("kehadiranBody");
+  const tanggalInput = document.getElementById("tanggalSelect");
+  const infoRingkas  = document.getElementById("infoRingkas");
+
+  // STATE
+  let studentsData   = {};   // /students
+  let attendanceData = {};   // /attendance
+
+  function getTodayISO() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function ensureTanggalDefault() {
+    if (!tanggalInput.value) {
+      tanggalInput.value = getTodayISO();
+    }
+  }
+
+  function normalizeStatusLabel(raw) {
+    const s = String(raw || "").trim().toLowerCase();
+    if (!s) return "Hadir";
+    if (s === "hadir") return "Hadir";
+    if (s === "izin")  return "Izin";
+    if (s === "sakit") return "Sakit";
+    if (s === "alpa" || s === "alpha") return "Alpa";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function parseDateKeyToISO(keyRaw) {
+    const key = String(keyRaw || "").trim();
+    if (!key) return null;
+    const k10 = key.length >= 10 ? key.slice(0, 10) : key;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(k10)) return k10;
+    if (/^\d{4}\/\d{2}\/\d{2}$/.test(k10)) return k10.replaceAll("/", "-");
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(k10)) {
+      const [dd, mm, yyyy] = k10.split("/");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    if (/^\d{2}-\d{2}-\d{4}$/.test(k10)) {
+      const [dd, mm, yyyy] = k10.split("-");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    return null;
+  }
+
+  function resolveDayNode(attData, selectedISO) {
+    if (!attData || typeof attData !== "object") return {};
+    if (attData[selectedISO]) return attData[selectedISO];
+
+    for (const [k, v] of Object.entries(attData)) {
+      const iso = parseDateKeyToISO(k);
+      if (iso && iso === selectedISO) return v || {};
+    }
+    return {};
+  }
+
+  function getFingerprintNode(perTanggal) {
+    if (!perTanggal || typeof perTanggal !== "object") return {};
+    if (perTanggal.fingerprint && typeof perTanggal.fingerprint === "object") return perTanggal.fingerprint;
+    return {};
+  }
+
+  function getTimeFromRecord(rec) {
+    const jam = rec?.time || rec?.jam || "";
+    if (jam) return String(jam);
+
+    const ts = rec?.timestamp;
+    if (ts && !Number.isNaN(Number(ts))) {
+      try {
+        const d = new Date(Number(ts));
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return `${hh}:${mm}:${ss}`;
+      } catch (_) {}
+    }
+    return "-";
+  }
+
+  function getFingerIdFromRec(rec, keyFallback) {
+    const fid =
+      rec?.finger_id ?? rec?.fingerID ?? rec?.fingerId ??
+      (keyFallback !== undefined && keyFallback !== null ? keyFallback : null);
+    if (fid === null || fid === undefined || String(fid).trim() === "") return null;
+    return String(fid);
+  }
+
+  function isRealAttendanceRecord(rec, keyFallback) {
+    if (!rec || typeof rec !== "object") return false;
+
+    const fid = getFingerIdFromRec(rec, keyFallback);
+    if (!fid) return false;
+
+    const jam = getTimeFromRecord(rec);
+    if (!jam || jam === "-") return false;
+
+    const mapel = String(rec.mapel || rec.subject || rec.pelajaran || "").trim();
+    if (!mapel) return false;
+    if (mapel.toUpperCase() === "RFID LOGIN") return false;
+
+    return true;
+  }
+
+  function buildStudentIndexes(studentsObj) {
+    const byFinger = {}; // fid -> { idSiswa, nama }
+    const byId     = {}; // id -> { nama }
+    Object.entries(studentsObj || {}).forEach(([idSiswa, s]) => {
+      if (!s) return;
+      const nama = s?.nama || s?.nama_siswa || "(Tanpa nama)";
+      byId[idSiswa] = { nama };
+
+      const fid = s?.finger_id ?? s?.fingerID ?? s?.fingerId ?? null;
+      if (fid === null || fid === undefined || String(fid).trim() === "") return;
+      byFinger[String(fid)] = { idSiswa, nama };
+    });
+    return { byFinger, byId };
+  }
+
+  function resolveStudent(rec, keyFallback, idxByFinger, idxById) {
+    const fid = getFingerIdFromRec(rec, keyFallback);
+    const idFromRec =
+      rec?.id_siswa ?? rec?.idSiswa ?? rec?.student_id ?? rec?.studentId ?? null;
+
+    const mapped = fid ? idxByFinger[fid] : null;
+    const idSiswa = (idFromRec && String(idFromRec).trim() !== "")
+      ? String(idFromRec)
+      : (mapped?.idSiswa || (fid || "-"));
+
+    const nama =
+      idxById[idSiswa]?.nama ||
+      mapped?.nama ||
+      rec?.siswa || rec?.nama || rec?.nama_siswa ||
+      "-";
+
+    return { fid, idSiswa, nama };
+  }
+
+  function renderTable() {
+    ensureTanggalDefault();
+    const selectedDate = tanggalInput.value || getTodayISO();
+
+    const perTanggal = resolveDayNode(attendanceData, selectedDate);
+    const fpNode     = getFingerprintNode(perTanggal);
+
+    const { byFinger, byId } = buildStudentIndexes(studentsData);
+
+    const rows = [];
+    let hadirCount = 0, izinCount = 0, sakitCount = 0, alpaCount = 0;
+
+    Object.entries(fpNode || {}).forEach(([k, rec]) => {
+      if (!isRealAttendanceRecord(rec, k)) return;
+
+      const { idSiswa, nama } = resolveStudent(rec, k, byFinger, byId);
+      const mapel = String(rec.mapel || rec.subject || rec.pelajaran || "-").trim() || "-";
+      const waktu = getTimeFromRecord(rec);
+      const status = normalizeStatusLabel(rec.status || "Hadir");
+
+      if (status === "Hadir") hadirCount++;
+      else if (status === "Izin") izinCount++;
+      else if (status === "Sakit") sakitCount++;
+      else if (status === "Alpa") alpaCount++;
+
+      const ts = rec?.timestamp;
+      const orderVal = (ts && !Number.isNaN(Number(ts))) ? Number(ts) : 0;
+
+      rows.push({ idSiswa, nama, mapel, status, waktu, _orderVal: orderVal });
+    });
+
+    rows.sort((a, b) => (b._orderVal - a._orderVal));
+
+    if (rows.length === 0) {
+      tbody.innerHTML =
+        `<tr><td colspan="5">Tidak ada data kehadiran untuk tanggal ${selectedDate}.</td></tr>`;
+      infoRingkas.textContent =
+        `Tidak ada siswa yang tercatat absen pada ${selectedDate}.`;
+      return;
+    }
+
+    tbody.innerHTML = "";
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row.idSiswa}</td>
+        <td>${row.nama}</td>
+        <td>${row.mapel}</td>
+        <td>${row.status}</td>
+        <td>${row.waktu}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const total = rows.length;
+    infoRingkas.textContent =
+      `${total} record tercatat | Hadir: ${hadirCount}, Izin: ${izinCount}, ` +
+      `Sakit: ${sakitCount}, Alpa: ${alpaCount} pada ${selectedDate}`;
+  }
+
+  function startRealtimeListeners() {
+    const studentsRef = ref(db, "students");
+    onValue(studentsRef, (snapshot) => {
+      studentsData = snapshot.val() || {};
+      renderTable();
+    });
+
+    const attendanceRef = ref(db, "attendance");
+    onValue(attendanceRef, (snapshot) => {
+      attendanceData = snapshot.val() || {};
+      renderTable();
+    }, (error) => {
+      console.error("Gagal baca attendance:", error);
+      tbody.innerHTML =
+        `<tr><td colspan="5">Gagal memuat data: ${error.code || error.message}</td></tr>`;
+      infoRingkas.textContent = "Gagal memuat data dari Firebase.";
+    });
+  }
+
+  signInAnonymously(auth)
+    .then(() => {
+      ensureTanggalDefault();
+      startRealtimeListeners();
+    })
+    .catch((error) => {
+      console.error("Gagal anon auth:", error);
+      tbody.innerHTML =
+        `<tr><td colspan="5">Gagal autentikasi Firebase: ${error.code || error.message}</td></tr>`;
+      infoRingkas.textContent = "Gagal autentikasi Firebase.";
+    });
+
+  tanggalInput.addEventListener("change", () => {
+    renderTable();
+  });
+
+  ensureTanggalDefault();
+</script>
+
+</body>
+</html>

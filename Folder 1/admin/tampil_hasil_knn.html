@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Hasil Prediksi Kedisiplinan Siswa (KNN)</title>
+  <link rel="stylesheet" href="tampil_hasil_knn.css">
+</head>
+<body>
+
+  <a href="dashboard_admin.html" class="btn-kembali">&#8592;</a>
+
+  <!-- Search bar (sesuai yang kamu minta) -->
+  <div class="search-container">
+      <input type="text" placeholder="Cari siswa..." id="search-input">
+      <span class="search-icon">&#128269;</span>
+  </div>
+
+  <!-- Dropdown lihat data -->
+  <div class="page-size-container">
+    <label for="pageSizeSelect">Lihat</label>
+    <select id="pageSizeSelect">
+      <option value="10" selected>10</option>
+      <option value="30">30</option>
+      <option value="50">50</option>
+      <option value="60">60</option>
+      <option value="90">90</option>
+      <option value="100">100</option>
+      <option value="150">150</option>
+      <option value="300">300</option>
+      <option value="0">Semua</option>
+    </select>
+    <span class="page-size-suffix">data</span>
+  </div>
+
+  <div class="wrap">
+    <h2>Hasil Prediksi Kedisiplinan Siswa (KNN)</h2>
+
+    <p class="meta">
+      Semester:
+      <strong id="semesterLabel">-</strong><br>
+      Terakhir diproses:
+      <strong id="lastProcessed">-</strong><br>
+      Prediksi berdasarkan dataset model menggunakan KNN Euclidean (jumlah hadir per siswa per semester).
+    </p>
+
+    <div id="infoMsg" class="notice" style="display:none;"></div>
+
+    <div style="text-align:center; margin-bottom:10px;">
+      <button id="btnUpdate" class="btn-update">🔄 Perbarui Prediksi</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>ID Siswa</th>
+            <th>Nama Siswa</th>
+            <th>Jumlah Hadir</th>
+            <th>Status Prediksi</th>
+            <th>Semester</th>
+            <th>Tanggal Diproses</th>
+          </tr>
+        </thead>
+        <tbody id="hasilBody">
+          <tr><td colspan="7" style="text-align:center;padding:12px;">Memuat data...</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Pager -->
+      <div class="pager" id="pager" style="display:none;">
+        <div class="pager-left" id="rangeInfo">-</div>
+        <div class="pager-right">
+          <button type="button" id="btnPrevPage">Previous</button>
+          <span class="pager-info" id="pageInfo">-</span>
+          <button type="button" id="btnNextPage">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form class="export-form" onsubmit="return false;">
+    <button type="button" id="btnExport" class="btn-export">⬇ Export CSV</button>
+  </form>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuayRKFrLjWaVcrWBeWZjmA4V_CWPtPcU",
+      authDomain: "presentech-4c4c0.firebaseapp.com",
+      databaseURL: "https://presentech-4c4c0-default-rtdb.firebaseio.com",
+      projectId: "presentech-4c4c0",
+      storageBucket: "presentech-4c4c0.appspot.com",
+      messagingSenderId: "255263820694",
+      appId: "1:255263820694:web:c7dd9f18b5b529cf67abb7"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const db   = getDatabase(app);
+    const auth = getAuth(app);
+
+    const API_BASE   = "./";
+    const API_HASIL  = API_BASE + "api_knn_hasil.php";
+    const API_PROSES = API_BASE + "api_knn_proses.php";
+    const API_EXPORT = API_BASE + "api_knn_export.php"; // sengaja dibiarkan, tapi TIDAK dipakai lagi
+
+    const API_KEY = "PRESENTECH_KNN_2025";
+    function apiFetch(url, opts = {}) {
+      const headers = Object.assign({}, opts.headers || {}, { "X-API-KEY": API_KEY });
+      return fetch(url, Object.assign({}, opts, {
+        headers,
+        credentials: "include",
+        cache: "no-store"
+      }));
+    }
+
+    const semesterLabel = document.getElementById("semesterLabel");
+    const lastProcessed = document.getElementById("lastProcessed");
+    const infoMsgDiv    = document.getElementById("infoMsg");
+    const hasilBody     = document.getElementById("hasilBody");
+    const btnUpdate     = document.getElementById("btnUpdate");
+    const btnExport     = document.getElementById("btnExport");
+
+    // ====== UI Filter/Paging ======
+    const searchInput    = document.getElementById("search-input");
+    const pageSizeSelect = document.getElementById("pageSizeSelect");
+    const pagerDiv       = document.getElementById("pager");
+    const rangeInfo      = document.getElementById("rangeInfo");
+    const pageInfo       = document.getElementById("pageInfo");
+    const btnPrevPage    = document.getElementById("btnPrevPage");
+    const btnNextPage    = document.getElementById("btnNextPage");
+
+    let currentPage = 1;
+    let pageSize = Number(pageSizeSelect.value || 10); // 0=semua
+    let searchQuery = "";
+
+    function showMessage(msg, type = "info") {
+      infoMsgDiv.style.display = "block";
+      infoMsgDiv.textContent   = msg;
+      infoMsgDiv.className     = "notice " + type;
+    }
+    function clearMessage() {
+      infoMsgDiv.style.display = "none";
+      infoMsgDiv.textContent   = "";
+      infoMsgDiv.className     = "notice";
+    }
+    function norm(s) { return String(s || "").toLowerCase().trim(); }
+
+    // ====== STATE dari Firebase ======
+    let studentsById      = {};   // {id_siswa: {nama, finger_id}}
+    let fingerToId        = {};   // {finger_id: id_siswa}
+    let attendanceData    = {};   // snapshot /attendance
+    let studentsLoaded    = false;
+    let attendanceLoaded  = false;
+
+    // ====== STATE hasil KNN dari MySQL (via API_HASIL) ======
+    let knnById = {}; // {id_siswa: row}
+
+    function getSemesterInfo() {
+      const now = new Date();
+      const bulan = now.getMonth() + 1;
+      const tahunNow = now.getFullYear();
+
+      const semester = ([7,8,9,10,11,12].includes(bulan)) ? "Ganjil" : "Genap";
+      const tahunAjar = (semester === "Ganjil") ? tahunNow : (tahunNow - 1);
+
+      let start, end;
+      if (semester === "Ganjil") {
+        start = new Date(`${tahunAjar}-07-01T00:00:00`);
+        end   = new Date(`${tahunAjar}-12-31T23:59:59`);
+      } else {
+        const y = tahunAjar + 1;
+        start = new Date(`${y}-01-01T00:00:00`);
+        end   = new Date(`${y}-06-30T23:59:59`);
+      }
+
+      return {
+        semester,
+        tahunAjar,
+        semesterLabelText: `${semester} ${tahunAjar}/${tahunAjar + 1}`,
+        startMs: start.getTime(),
+        endMs: end.getTime()
+      };
+    }
+
+    function parseDateKeyToMs(key) {
+      if (key == null) return null;
+
+      if (typeof key === "number") {
+        const ms = key > 1e12 ? key : key * 1000;
+        return Number.isFinite(ms) ? ms : null;
+      }
+
+      const s = String(key).trim();
+
+      const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (iso) return new Date(`${iso[1]}-${iso[2]}-${iso[3]}T00:00:00`).getTime();
+
+      const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (dmy) {
+        const dd = String(dmy[1]).padStart(2, "0");
+        const mm = String(dmy[2]).padStart(2, "0");
+        return new Date(`${dmy[3]}-${mm}-${dd}T00:00:00`).getTime();
+      }
+
+      const t = Date.parse(s);
+      return Number.isFinite(t) ? t : null;
+    }
+
+    function collectAttendanceEvents(node, out, pathKey = "") {
+      if (!node) return;
+
+      if (Array.isArray(node)) {
+        node.forEach((v) => collectAttendanceEvents(v, out, pathKey));
+        return;
+      }
+
+      if (typeof node !== "object") return;
+
+      const pk = String(pathKey).toLowerCase();
+      if (pk.includes("rfid")) return;
+
+      const hasFinger  = node.finger_id != null || node.fingerID != null;
+      const hasStudent = node.id_siswa != null || node.idSiswa != null;
+
+      const tipe = String(node.type ?? node.metode ?? node.mode ?? "").toLowerCase();
+      const namaKegiatan = String(node.kegiatan ?? node.keterangan ?? "").toLowerCase();
+      if (tipe.includes("rfid") || namaKegiatan.includes("rfid")) return;
+
+      if (hasFinger || hasStudent) {
+        out.push(node);
+        return;
+      }
+
+      for (const [k, v] of Object.entries(node)) {
+        const lk = String(k).toLowerCase();
+        if (lk.includes("rfid")) continue;
+        collectAttendanceEvents(v, out, k);
+      }
+    }
+
+    function computeHadirCountsForSemester() {
+      const { startMs, endMs } = getSemesterInfo();
+
+      const counts = {};
+      const seen = {};
+
+      function addCount(idSiswa, tanggalMs) {
+        if (!idSiswa || tanggalMs == null) return;
+        if (tanggalMs < startMs || tanggalMs > endMs) return;
+
+        const d = new Date(tanggalMs);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const dayKey = `${yyyy}-${mm}-${dd}`;
+
+        const id = String(idSiswa);
+        if (!seen[id]) seen[id] = {};
+        if (seen[id][dayKey]) return;
+
+        seen[id][dayKey] = true;
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+
+      const attendance = attendanceData || {};
+      const keys = Object.keys(attendance);
+
+      const looksLikeDateKeys = keys.some(k => parseDateKeyToMs(k) !== null);
+
+      if (looksLikeDateKeys) {
+        for (const [tanggalKey, perTanggal] of Object.entries(attendance)) {
+          const tMs = parseDateKeyToMs(tanggalKey);
+          if (tMs == null) continue;
+
+          const node = (perTanggal && typeof perTanggal === "object" && perTanggal.fingerprint)
+            ? perTanggal.fingerprint
+            : perTanggal;
+
+          const events = [];
+          collectAttendanceEvents(node, events, "root");
+
+          for (const ev of events) {
+            const idDirect = ev.id_siswa ?? ev.idSiswa ?? null;
+            let idSiswa = (idDirect != null && idDirect !== "") ? String(idDirect) : null;
+
+            if (!idSiswa) {
+              const fid = ev.finger_id ?? ev.fingerID ?? null;
+              if (fid != null && fid !== "") idSiswa = fingerToId[String(fid)] || null;
+            }
+
+            addCount(idSiswa, tMs);
+          }
+        }
+      } else {
+        for (const [, rec] of Object.entries(attendance)) {
+          if (!rec || typeof rec !== "object") continue;
+
+          const tipe = String(rec.type ?? rec.metode ?? rec.mode ?? "").toLowerCase();
+          const keg  = String(rec.kegiatan ?? rec.keterangan ?? "").toLowerCase();
+          if (tipe.includes("rfid") || keg.includes("rfid")) continue;
+
+          const tMs = parseDateKeyToMs(rec.tanggal ?? rec.date ?? rec.created_at ?? rec.waktu);
+          if (tMs == null) continue;
+
+          const idDirect = rec.id_siswa ?? rec.idSiswa ?? null;
+          let idSiswa = (idDirect != null && idDirect !== "") ? String(idDirect) : null;
+
+          if (!idSiswa) {
+            const fid = rec.finger_id ?? rec.fingerID ?? null;
+            if (fid != null && fid !== "") idSiswa = fingerToId[String(fid)] || null;
+          }
+
+          addCount(idSiswa, tMs);
+        }
+      }
+
+      return counts;
+    }
+
+    function applyFilterAndPaging(allIds) {
+      const q = norm(searchQuery);
+
+      const filtered = !q ? allIds : allIds.filter((id) => {
+        const nama = norm(studentsById[id]?.nama || "");
+        return norm(id).includes(q) || nama.includes(q);
+      });
+
+      const total = filtered.length;
+      const size = (pageSize === 0) ? total : pageSize;
+      const totalPages = Math.max(1, Math.ceil(total / (size || 1)));
+
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = (size ? (currentPage - 1) * size : 0);
+      const endIndex   = (size ? Math.min(startIndex + size, total) : total);
+
+      const pageIds = filtered.slice(startIndex, endIndex);
+      return { pageIds, total, totalPages, startIndex, endIndex };
+    }
+
+    function updatePagerUI(total, totalPages, startIndex, endIndex) {
+      if (!studentsLoaded || total === 0) {
+        pagerDiv.style.display = "none";
+        return;
+      }
+
+      pagerDiv.style.display = "flex";
+      const shownFrom = total === 0 ? 0 : (startIndex + 1);
+      const shownTo   = endIndex;
+
+      rangeInfo.textContent = `Menampilkan ${shownFrom}–${shownTo} dari ${total} data`;
+      pageInfo.textContent  = `Halaman ${currentPage} / ${totalPages}`;
+
+      btnPrevPage.disabled = (currentPage <= 1);
+      btnNextPage.disabled = (currentPage >= totalPages);
+    }
+
+    function renderTable() {
+      if (!studentsLoaded) {
+        hasilBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:12px;">Memuat siswa dari Firebase...</td></tr>`;
+        pagerDiv.style.display = "none";
+        return;
+      }
+
+      const idsAll = Object.keys(studentsById);
+      if (idsAll.length === 0) {
+        hasilBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:12px;">Belum ada data siswa di Firebase.</td></tr>`;
+        pagerDiv.style.display = "none";
+        return;
+      }
+
+      idsAll.sort((a, b) => a.localeCompare(b));
+      const { semesterLabelText } = getSemesterInfo();
+
+      const { pageIds, total, totalPages, startIndex, endIndex } = applyFilterAndPaging(idsAll);
+
+      if (total === 0) {
+        hasilBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:12px;">Tidak ada data yang cocok dengan pencarian.</td></tr>`;
+        updatePagerUI(0, 1, 0, 0);
+        return;
+      }
+
+      let html = "";
+      let no = startIndex + 1;
+
+      pageIds.forEach((idSiswa) => {
+        const nama  = studentsById[idSiswa]?.nama || "-";
+
+        const hasil = knnById[idSiswa] || {};
+        const jumlahHad = (hasil.jumlah_hadir !== undefined && hasil.jumlah_hadir !== null)
+          ? hasil.jumlah_hadir
+          : "-";
+        const status    = hasil.status || "Belum Diprediksi";
+        const semTxt    = hasil.semester || (semesterLabel.textContent || semesterLabelText || "-");
+        const tglDipros = hasil.tanggal_hasil_diproses || "-";
+
+        let bg = "#ffffff";
+        if (status === "Disiplin")              bg = "#e8fff0";
+        else if (status === "Kurang Disiplin")  bg = "#fff9e5";
+        else if (status === "Tidak Disiplin")   bg = "#ffecec";
+        else if (status === "Belum Diprediksi") bg = "#f2f2f2";
+
+        html += `
+          <tr style="background:${bg};">
+            <td>${no++}</td>
+            <td>${idSiswa}</td>
+            <td>${nama}</td>
+            <td>${jumlahHad}</td>
+            <td>${status}</td>
+            <td>${semTxt}</td>
+            <td>${tglDipros}</td>
+          </tr>
+        `;
+      });
+
+      hasilBody.innerHTML = html;
+      updatePagerUI(total, totalPages, startIndex, endIndex);
+    }
+
+    async function loadHasilKNN() {
+      try {
+        const res = await apiFetch(API_HASIL + "?t=" + Date.now(), { method: "GET" });
+        const text = await res.text();
+
+        let data;
+        try { data = JSON.parse(text); } catch { throw new Error("Response bukan JSON: " + text); }
+
+        semesterLabel.textContent = data.semester_label || "-";
+        lastProcessed.textContent = data.last_processed || "-";
+
+        const rows = Array.isArray(data.rows) ? data.rows : [];
+        const map = {};
+        rows.forEach((row) => {
+          if (!row || row.id_siswa === undefined || row.id_siswa === null) return;
+          map[String(row.id_siswa)] = row;
+        });
+        knnById = map;
+
+        renderTable();
+      } catch (err) {
+        showMessage("Gagal memuat data KNN: " + err.message, "error");
+      }
+    }
+
+    async function prosesKNN() {
+      try {
+        clearMessage();
+
+        if (!studentsLoaded) {
+          showMessage("Data siswa Firebase belum siap.", "error");
+          return;
+        }
+        if (!attendanceLoaded) {
+          showMessage("Data attendance Firebase belum siap.", "error");
+          return;
+        }
+
+        const ids = Object.keys(studentsById);
+        if (ids.length === 0) {
+          showMessage("Belum ada data siswa di Firebase.", "error");
+          renderTable();
+          return;
+        }
+
+        btnUpdate.disabled = true;
+        showMessage("Memproses KNN dari data Firebase...", "info");
+
+        const hadirCounts = computeHadirCountsForSemester();
+
+        const studentsPayload = ids.map(id => ({
+          id_siswa: id,
+          nama_siswa: (studentsById[id]?.nama || `Siswa ${id}`)
+        }));
+
+        const payload = {
+          students: studentsPayload,
+          hadir_counts: hadirCounts
+        };
+
+        const res = await apiFetch(API_PROSES + "?t=" + Date.now(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { throw new Error("Response bukan JSON: " + text); }
+
+        if (!res.ok || !data.success) {
+          showMessage(data.message || ("Gagal memproses (HTTP " + res.status + ")"), "error");
+        } else {
+          showMessage(data.message || "Berhasil memproses KNN.", "success");
+        }
+
+        await loadHasilKNN();
+      } catch (err) {
+        showMessage("Terjadi kesalahan saat memproses KNN: " + err.message, "error");
+      } finally {
+        btnUpdate.disabled = false;
+      }
+    }
+
+    // ==========================================================
+    // EXPORT CSV: AMBIL PERSIS YANG TAMPIL DI TABEL (10 BARIS, dll)
+    // ==========================================================
+    function exportCSV() {
+      const trs = Array.from(hasilBody.querySelectorAll("tr"));
+      const rows = [];
+
+      for (const tr of trs) {
+        const tds = tr.querySelectorAll("td");
+        if (tds.length !== 7) continue; // skip row "Memuat..." / "Tidak ada data..."
+
+        rows.push([
+          tds[0].innerText.trim(), // No (sesuai tampil)
+          tds[1].innerText.trim(), // ID
+          tds[2].innerText.trim(), // Nama (persis tampil di aplikasi)
+          tds[3].innerText.trim(), // Jumlah Hadir
+          tds[4].innerText.trim(), // Status
+          tds[5].innerText.trim(), // Semester
+          tds[6].innerText.trim()  // Tanggal
+        ]);
+      }
+
+      if (rows.length === 0) {
+        showMessage("Tidak ada data yang sedang tampil untuk diexport.", "error");
+        return;
+      }
+
+      const header = ["No","ID Siswa","Nama Siswa","Jumlah Hadir","Status Prediksi","Semester","Tanggal Diproses"];
+      const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const csv = [header, ...rows].map(line => line.map(esc).join(",")).join("\r\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const safeSemester = String(semesterLabel.textContent || "semester")
+        .replace(/[^\w\- ]+/g, "")
+        .replace(/\s+/g, "_");
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `hasil_knn_tampil_${safeSemester}_hal${currentPage}_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function startFirebaseListeners() {
+      // students
+      onValue(ref(db, "students"), (snapshot) => {
+        const val = snapshot.val() || {};
+        const map = {};
+        const f2i = {};
+
+        Object.entries(val).forEach(([idSiswa, obj]) => {
+          if (!obj) return;
+          const nama = obj.nama || obj.nama_siswa || "";
+          const fid  = obj.finger_id ?? obj.fingerID ?? null;
+
+          map[String(idSiswa)] = { nama, finger_id: fid };
+          if (fid !== null && fid !== "") f2i[String(fid)] = String(idSiswa);
+        });
+
+        studentsById = map;
+        fingerToId   = f2i;
+        studentsLoaded = true;
+
+        renderTable();
+      }, (error) => {
+        studentsLoaded = true;
+        showMessage("Gagal membaca data siswa dari Firebase: " + (error.message || error.code), "error");
+        renderTable();
+      });
+
+      // attendance
+      onValue(ref(db, "attendance"), (snapshot) => {
+        attendanceData = snapshot.val() || {};
+        attendanceLoaded = true;
+      }, (error) => {
+        attendanceLoaded = true;
+        showMessage("Gagal membaca attendance Firebase: " + (error.message || error.code), "error");
+      });
+    }
+
+    // ====== EVENT UI ======
+    searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value || "";
+      currentPage = 1;
+      renderTable();
+    });
+
+    pageSizeSelect.addEventListener("change", (e) => {
+      pageSize = Number(e.target.value || 10);
+      currentPage = 1;
+      renderTable();
+    });
+
+    btnPrevPage.addEventListener("click", () => {
+      currentPage = Math.max(1, currentPage - 1);
+      renderTable();
+    });
+
+    btnNextPage.addEventListener("click", () => {
+      currentPage = currentPage + 1;
+      renderTable();
+    });
+
+    btnUpdate.addEventListener("click", prosesKNN);
+
+    // Listener export dibuat "anti bentrok" supaya export lama (PHP) tidak terpanggil
+    btnExport.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      exportCSV();
+    }, true);
+
+    // ====== Start auth
+    signInAnonymously(auth).catch((error) => {
+      showMessage("Gagal login anonim Firebase: " + (error.message || error.code), "error");
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const info = getSemesterInfo();
+        semesterLabel.textContent = info.semesterLabelText;
+
+        startFirebaseListeners();
+        loadHasilKNN();
+      } else {
+        showMessage("Belum login Firebase, data tidak bisa diakses.", "error");
+      }
+    });
+  </script>
+</body>
+</html>

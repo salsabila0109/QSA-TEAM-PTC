@@ -7,7 +7,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
+    background-color: #f5f5f5;
     color: #333;
 }
 
@@ -15,85 +15,94 @@ body {
 .container {
     width: 90%;
     max-width: 1000px;
-    margin: 20px auto;
+    margin: 25px auto;
     padding: 20px;
-    background: #E0F2F1;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    background: #E0F2F1; /* hijau toska muda */
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
 }
 
 .container h1 {
-    margin-bottom: 15px;
-    color: #004D40;
-     text-align: center; 
+    text-align: center;
+    color: #004D40; /* hijau tua */
+    margin-bottom: 20px;
 }
 
-/* Tombol */
+/* Tombol umum */
 .btn {
     display: inline-block;
     padding: 8px 14px;
-    border-radius: 5px;
+    border-radius: 6px;
     text-decoration: none;
-    color: #fff;
     font-weight: bold;
-    transition: 0.3s;
-    margin-right: 5px;
+    color: #fff;
+    transition: background 0.3s ease;
+    border: none;
+    cursor: pointer;
 }
 
-/* Tombol Tambah */
+/* Tambah */
 .btn-tambah {
-    background: #009688;
+    background-color: #009688;
     margin-bottom: 15px;
 }
-
 .btn-tambah:hover {
-    background: #00796B;
+    background-color: #00796B;
 }
 
-/* Tombol Edit */
+/* Edit */
 .btn-edit {
-    background: #4CAF50;
+    background-color: #4CAF50;
 }
-
 .btn-edit:hover {
-    background: #388E3C;
+    background-color: #388E3C;
 }
 
-/* Tombol Hapus */
+/* Hapus */
 .btn-hapus {
-    background: #F44336;
+    background-color: #F44336;
 }
-
 .btn-hapus:hover {
-    background: #D32F2F;
+    background-color: #D32F2F;
 }
 
 /* Tabel */
 table {
     width: 100%;
     border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-table th, table td {
+th, td {
     border: 1px solid #ccc;
-    padding: 10px;
+    padding: 10px 12px;
     text-align: center;
 }
 
-table th {
-    background: #009688;
-    color: #fff;
+th {
+    background-color: #009688;
+    color: white;
+    font-weight: bold;
 }
 
-table tr:nth-child(even) {
-    background: #f2f2f2;
+tr:nth-child(even) {
+    background-color: #f2f2f2;
 }
 
-/* Responsive HP */
+/* Kolom aksi */
+.aksi {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+
+/* Responsive */
 @media (max-width: 600px) {
     .container {
         width: 95%;
-        padding: 10px;
+        padding: 15px;
     }
 
     table {
@@ -102,7 +111,7 @@ table tr:nth-child(even) {
         white-space: nowrap;
     }
 
-    table th, table td {
+    th, td {
         padding: 8px;
         font-size: 14px;
     }
@@ -110,12 +119,9 @@ table tr:nth-child(even) {
     .btn {
         padding: 6px 10px;
         font-size: 13px;
-        display: block;
-        margin-bottom: 10px;
     }
 
-    .aksi .btn {
-        display: inline-block;
-        margin-bottom: 5px;
+    .aksi {
+        flex-wrap: wrap;
     }
 }

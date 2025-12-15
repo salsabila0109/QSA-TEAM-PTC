@@ -1,0 +1,126 @@
+/* ===== Umum ===== */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #E0F7FA, #FFFFFF);
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== Kartu Utama ===== */
+.card {
+    width: 500px;
+    background: #FFFFFF;
+    margin: 70px auto;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+/* ===== Header ===== */
+.card-header {
+    background: linear-gradient(135deg, #00796B);
+    color: #fff;
+    padding: 15px 20px;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* ===== Isi Kartu ===== */
+.card-body {
+    padding: 25px;
+}
+
+/* ===== Tabel Form ===== */
+.form-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.form-table td {
+    padding: 10px;
+    vertical-align: middle;
+}
+
+.form-table .label {
+    font-weight: 600;
+    color: #00796B;
+    width: 35%;
+}
+
+/* ===== Input ===== */
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #B2DFDB;
+    border-radius: 8px;
+    outline: none;
+    font-size: 15px;
+    transition: 0.3s ease;
+}
+
+input[type="text"]:focus {
+    border-color: #00796B;
+    box-shadow: 0 0 5px rgba(0,121,107,0.4);
+}
+
+/* ===== Tombol ===== */
+.btn-simpan {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #009688;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: 0.3s ease;
+}
+
+.btn-simpan:hover {
+    background-color: #00796B;
+}
+
+/* ===== Label Tanggal ===== */
+#tanggal_diperbarui {
+    font-weight: 500;
+    color: #004D40;
+    background: #E0F2F1;
+    display: inline-block;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+/* ===== Animasi ===== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Responsif ===== */
+@media (max-width: 600px) {
+    .card {
+        width: 90%;
+        margin: 30px auto;
+    }
+
+    .form-table .label {
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .form-table td {
+        display: block;
+        width: 100%;
+    }
+
+    input[type="text"] {
+        width: 100%;
+    }
+}

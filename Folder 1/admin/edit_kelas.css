@@ -17,7 +17,7 @@ body {
 
 h1 {
     text-align: center;
-    color: #333;
+    color: #004D40;
     margin-bottom: 20px;
 }
 
@@ -44,7 +44,7 @@ form input[type="text"], form select {
     margin-top: 20px;
 }
 
-/* Tombol simpan */
+/* Tombol hijau seragam */
 .btn {
     display: flex;
     align-items: center;
@@ -52,13 +52,13 @@ form input[type="text"], form select {
     gap: 5px;
     padding: 10px 15px;
     border-radius: 5px;
-    background-color: #27ae60;
+    background-color: #27ae60; /* hijau seragam */
     color: white;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     border: none;
-    transition: background 0.3s;
+    transition: background 0.3s, transform 0.2s;
 }
 
 .btn:hover {
@@ -78,6 +78,30 @@ form input[type="text"], form select {
     color: #3c763d;
     border-radius: 5px;
     text-align: center;
+}
+
+/* Tombol Kembali seragam hijau */
+.btn-kembali {
+    position: fixed;
+    top: 18px;
+    left: 20px;
+    background-color: #00796b; /* hijau seragam */
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 999;
+}
+.btn-kembali:hover {
+    background-color: #03aa8e; /* hover sama dengan tombol simpan */
+    transform: scale(1.08);
 }
 
 /* Responsive HP */

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Data Siswa</title>
+
+    <!-- CSS kamu -->
+    <link rel="stylesheet" href="manajemen_data_siswa.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- Tombol kembali -->
+<a href="dashboard_admin.html" class="btn-kembali" title="Kembali"
+   onclick="event.preventDefault();location.href='dashboard_admin.html'">&#8592;</a>
+
+<div class="container">
+
+    <!-- Search bar -->
+    <div class="search-container">
+        <input type="text" placeholder="Cari siswa..." id="search-input">
+        <span class="search-icon">&#128269;</span>
+    </div>
+
+    <!-- FILTER KELAS (TAMBAHAN) -->
+    <div style="margin: 10px 0 16px; display:flex; align-items:center; gap:10px;">
+        <label for="kelasFilter" style="font-weight:600; color:#004D40;">Filter Kelas:</label>
+        <select id="kelasFilter" style="padding:8px 10px; border-radius:8px; border:1px solid #004D40;">
+            <option value="">Semua Kelas</option>
+        </select>
+    </div>
+
+    <!-- Judul -->
+    <header class="topbar">
+        <div class="judul">Manajemen Data Siswa</div>
+    </header>
+
+    <!-- Tombol tambah -->
+    <a href="tambah_siswa.php" class="btn btn-tambah">+ Tambah Siswa</a>
+
+    <!-- Tabel data siswa -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>NIS</th>
+                <th>Nama Siswa</th>
+                <th>Nama Kelas</th>
+                <th>Nomor Ortu</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="siswaTableBody">
+            <tr>
+                <td colspan="6" style="text-align:center; padding:12px;">
+                    Memuat data siswa...
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+// elemen tabel
+const siswaTableBody = document.getElementById('siswaTableBody');
+
+// elemen filter kelas
+const kelasFilter = document.getElementById('kelasFilter');
+
+// simpan data asli dari API untuk difilter
+let allRows = [];
+
+// id siswa yang baru di-update (dipindah ke atas setelah load)
+let updatedIdToPin = null;
+
+/* =========================
+   PARSE TANGGAL MYSQL (AMAN)
+   MySQL: "YYYY-MM-DD HH:MM:SS" -> jadikan ISO
+========================= */
+function parseCreatedAt(v) {
+    if (v === null || v === undefined) return NaN;
+    let s = String(v).trim();
+    if (!s) return NaN;
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/.test(s)) {
+        s = s.replace(' ', 'T');
+    }
+    const t = Date.parse(s);
+    return Number.isNaN(t) ? NaN : t;
+}
+
+/* =========================
+   HELPER: SORT DATA TERBARU DI ATAS
+   Prioritas:
+   1) tanggal_data_dibuat (DESC)
+   2) id_siswa (DESC)
+   3) nis (DESC)
+========================= */
+function sortNewestFirst(rows) {
+    if (!Array.isArray(rows)) return rows;
+
+    rows.sort((a, b) => {
+        // 1) tanggal_data_dibuat (kalau ada)
+        const ta = a && a.tanggal_data_dibuat ? parseCreatedAt(a.tanggal_data_dibuat) : NaN;
+        const tb = b && b.tanggal_data_dibuat ? parseCreatedAt(b.tanggal_data_dibuat) : NaN;
+
+        if (!Number.isNaN(ta) && !Number.isNaN(tb) && ta !== tb) {
+            return tb - ta; // terbaru dulu
+        }
+        if (!Number.isNaN(ta) && Number.isNaN(tb)) return -1; // a punya tanggal, b tidak
+        if (Number.isNaN(ta) && !Number.isNaN(tb)) return 1;  // b punya tanggal, a tidak
+
+        // 2) fallback: id_siswa desc
+        const ida = Number(a && a.id_siswa);
+        const idb = Number(b && b.id_siswa);
+        if (!Number.isNaN(ida) && !Number.isNaN(idb) && ida !== idb) {
+            return idb - ida;
+        }
+        if (!Number.isNaN(ida) && Number.isNaN(idb)) return -1;
+        if (Number.isNaN(ida) && !Number.isNaN(idb)) return 1;
+
+        // 3) fallback: nis desc
+        const nisa = Number(a && a.nis);
+        const nisb = Number(b && b.nis);
+        if (!Number.isNaN(nisa) && !Number.isNaN(nisb) && nisa !== nisb) {
+            return nisb - nisa;
+        }
+        if (!Number.isNaN(nisa) && Number.isNaN(nisb)) return -1;
+        if (Number.isNaN(nisa) && !Number.isNaN(nisb)) return 1;
+
+        // terakhir: nama asc supaya stabil
+        return String(a?.nama_siswa || '').localeCompare(String(b?.nama_siswa || ''), 'id', { sensitivity: 'base' });
+    });
+
+    return rows;
+}
+
+/* =========================
+   PIN: Siswa yang baru di-update dipindah ke paling atas
+========================= */
+function pinUpdatedRowToTop(rows, id) {
+    if (!id || !Array.isArray(rows)) return rows;
+    const sid = String(id);
+
+    const idx = rows.findIndex(r => String(r?.id_siswa) === sid);
+    if (idx > 0) {
+        const [item] = rows.splice(idx, 1);
+        rows.unshift(item);
+    }
+    return rows;
+}
+
+/* =========================
+   RENDER TABEL
+========================= */
+function renderSiswaTable(rows) {
+    siswaTableBody.innerHTML = '';
+
+    if (!rows || rows.length === 0) {
+        siswaTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center; padding:12px;">
+                    Belum ada data siswa.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    rows.forEach((row) => {
+        const tr = document.createElement('tr');
+
+        const namaKelas = row.nama_kelas ? row.nama_kelas : '-';
+        const noOrtu    = row.nomor_telepon_orangtua ? row.nomor_telepon_orangtua : '-';
+
+        tr.innerHTML = `
+            <td>${row.id_siswa}</td>
+            <td>${row.nis}</td>
+            <td>${row.nama_siswa}</td>
+            <td>${namaKelas}</td>
+            <td>${noOrtu}</td>
+            <td class="aksi">
+                <a href="edit_siswa.php?id=${encodeURIComponent(row.id_siswa)}" class="btn btn-edit">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </a>
+                <a href="hapus_siswa.php?id=${encodeURIComponent(row.id_siswa)}" class="btn btn-hapus"
+                   onclick="return confirm('Yakin hapus?')">
+                    <i class="fa-solid fa-trash"></i>
+                </a>
+            </td>
+        `;
+        siswaTableBody.appendChild(tr);
+    });
+}
+
+/* =========================
+   FALLBACK: isi dropdown dari data siswa (jika master gagal)
+========================= */
+function populateKelasFilterFromSiswa(rows) {
+    const setKelas = new Set();
+
+    (rows || []).forEach(r => {
+        const k = (r.nama_kelas ?? '').toString().trim();
+        if (k && k !== '-') setKelas.add(k);
+    });
+
+    kelasFilter.innerHTML = `<option value="">Semua Kelas</option>`;
+
+    Array.from(setKelas)
+        .sort((a, b) => a.localeCompare(b))
+        .forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = k;
+            kelasFilter.appendChild(opt);
+        });
+}
+
+/* =========================
+   isi dropdown dari MASTER KELAS (api_kelas_siswa.php)
+========================= */
+function loadKelasMaster() {
+    return fetch('../api_kelas_siswa.php', { credentials: 'include' })
+        .then(res => res.json())
+        .then(json => {
+            if (!json || !json.success) return;
+
+            const list = Array.isArray(json.kelas_list) ? json.kelas_list : [];
+            const setKelas = new Set();
+
+            list.forEach(k => {
+                const kk = String(k ?? '').trim();
+                if (kk) setKelas.add(kk);
+            });
+
+            kelasFilter.innerHTML = `<option value="">Semua Kelas</option>`;
+            Array.from(setKelas)
+                .sort((a, b) => a.localeCompare(b))
+                .forEach(k => {
+                    const opt = document.createElement('option');
+                    opt.value = k;
+                    opt.textContent = k;
+                    kelasFilter.appendChild(opt);
+                });
+        })
+        .catch(err => console.warn("Gagal load master kelas:", err));
+}
+
+/* =========================
+   FILTER (search + kelas)
+========================= */
+function applyFilters() {
+    const searchInput = document.getElementById('search-input');
+    const q = (searchInput.value || '').toLowerCase();
+    const k = (kelasFilter.value || '').toLowerCase();
+
+    const filtered = (allRows || []).filter(row => {
+        const nama  = String(row.nama_siswa || '').toLowerCase();
+        const kelas = String(row.nama_kelas || '').toLowerCase();
+
+        const matchNama  = !q || nama.includes(q);
+        const matchKelas = !k || kelas === k;
+
+        return matchNama && matchKelas;
+    });
+
+    sortNewestFirst(filtered);
+
+    // jika siswa yang di-update ada di hasil filter, tetap pin di atas
+    pinUpdatedRowToTop(filtered, updatedIdToPin);
+
+    renderSiswaTable(filtered);
+}
+
+/* =========================
+   LOAD SISWA
+========================= */
+function loadSiswa() {
+    fetch('api_siswa.php', { credentials: 'include' })
+    .then(res => res.json())
+    .then(json => {
+        if (!json.success) {
+            siswaTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:12px; color:red;">
+                        Gagal memuat data siswa: ${json.message || 'Unknown error'}
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        allRows = json.data || [];
+        sortNewestFirst(allRows);
+
+        // pindahkan siswa yang baru di-update ke paling atas
+        pinUpdatedRowToTop(allRows, updatedIdToPin);
+        updatedIdToPin = null; // sekali saja di load awal
+
+        loadKelasMaster().then(() => {
+            if (kelasFilter.options.length <= 1) {
+                populateKelasFilterFromSiswa(allRows);
+            }
+        });
+
+        renderSiswaTable(allRows);
+    })
+    .catch(err => {
+        console.error(err);
+        siswaTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center; padding:12px; color:red;">
+                    Terjadi kesalahan saat memuat data.
+                </td>
+            </tr>
+        `;
+    });
+}
+
+/* =========================
+   NOTIF DARI EDIT (updated=1)
+   - pakai alert
+   - simpan updated_id untuk dipin ke atas
+   - hapus query param agar tidak muncul saat refresh
+========================= */
+function handleUpdateNotif() {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('updated') === '1') {
+        alert('✅ Data siswa berhasil diperbaharui.');
+
+        // ambil id siswa yang di-update
+        updatedIdToPin = params.get('updated_id');
+
+        // bersihkan URL
+        params.delete('updated');
+        params.delete('updated_id');
+        const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+        window.history.replaceState({}, '', newUrl);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    handleUpdateNotif();
+    loadSiswa();
+
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('keyup', applyFilters);
+
+    kelasFilter.addEventListener('change', applyFilters);
+});
+</script>
+
+</body>
+</html>

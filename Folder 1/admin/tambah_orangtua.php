@@ -2,7 +2,7 @@
 session_start();
 include '../db.php';
 
-// Pastikan hanya admin yang bisa mengakses
+// Cek role admin
 if (!isset($_SESSION['role_pengguna']) || $_SESSION['role_pengguna'] !== 'admin') {
     header("Location: ../login.php");
     exit;
@@ -16,29 +16,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $no_hp = $_POST['no_hp'];
     $id_siswa = $_POST['id_siswa'];
 
-    // Username otomatis dari nomor HP
+    // Username = nomor HP, password default = orangtua123
     $username = $no_hp;
-    // Password default (di-hash agar aman)
-    $password = password_hash("orangtua12345", PASSWORD_DEFAULT);
+    $password_plain = "orangtua123";
+    $password = password_hash($password_plain, PASSWORD_DEFAULT);
 
-    $query = "INSERT INTO orangtua 
-              (nama_orangtua, no_hp, id_siswa, username, password, must_change_password, created_at)
-              VALUES (?, ?, ?, ?, ?, 1, NOW())";
+    // Kalau tidak ada foto, set null (biar sesuai struktur tabel)
+    $foto = null;
+
+    // ✅ query sesuai struktur tabel kamu
+    $query = "INSERT INTO orangtua (nama_orangtua, no_hp, username, password, id_siswa, foto)
+              VALUES (?, ?, ?, ?, ?, ?)";
+
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ssiss", $nama_orangtua, $no_hp, $id_siswa, $username, $password);
+    $stmt->bind_param("ssssis", $nama_orangtua, $no_hp, $username, $password, $id_siswa, $foto);
 
     if ($stmt->execute()) {
-        $message = "✅ Data orang tua berhasil ditambahkan!<br>Username: <b>$username</b> | Password awal: <b>orangtua12345</b>";
+        $message = "✅ Data orangtua berhasil ditambahkan!<br>
+        Username: <b>$username</b> | Password awal: <b>$password_plain</b>";
     } else {
         $message = "❌ Gagal menambahkan data: " . $conn->error;
     }
+
     $stmt->close();
 }
-
-// Ambil data siswa untuk dropdown
-$siswa_result = mysqli_query($conn, "SELECT id_siswa, nama_siswa FROM siswa ORDER BY nama_siswa ASC");
 ?>
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -48,41 +50,65 @@ $siswa_result = mysqli_query($conn, "SELECT id_siswa, nama_siswa FROM siswa ORDE
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="form-container">
-        <h2><i class="fas fa-user-plus"></i> Tambah Data Orang Tua</h2>
+<div class="form-container">
+    <h2><i class="fas fa-user-plus"></i> Tambah Data Orang Tua</h2>
 
-        <?php if (!empty($message)): ?>
-            <div class="message"><?php echo $message; ?></div>
-        <?php endif; ?>
+    <?php if (!empty($message)): ?>
+        <div class="message"><?= $message; ?></div>
+    <?php endif; ?>
 
-        <form method="POST" action="">
-            <label>Nama Orang Tua:</label>
-            <input type="text" name="nama_orangtua" placeholder="Masukkan nama orang tua" required>
+    <form method="POST" action="">
+        <label for="nama_orangtua">Nama Orang Tua:</label>
+        <input type="text" name="nama_orangtua" id="nama_orangtua" placeholder="Masukkan nama orang tua" required>
 
-            <label>Nomor HP:</label>
-            <input type="text" name="no_hp" placeholder="08xxxxxxxxxx" required>
+        <label for="no_hp">No.Telepon:</label>
+        <input type="text" name="no_hp" id="no_hp" placeholder="08xxxxxxxxxx" required>
 
-            <label>Pilih Siswa:</label>
-            <select name="id_siswa" required>
-                <option value="">-- Pilih Siswa --</option>
-                <?php while ($row = mysqli_fetch_assoc($siswa_result)): ?>
-                    <option value="<?php echo $row['id_siswa']; ?>">
-                        <?php echo htmlspecialchars($row['nama_siswa']); ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
+        <label for="cariSiswa">Cari Siswa:</label>
+        <input type="text" id="cariSiswa" placeholder="Ketik nama siswa..." autocomplete="off" required>
+        <div id="hasilCari" class="hasil-cari"></div>
 
-      <div class="button-group">
-    <button type="submit" class="submit-btn">
-        <i class="fas fa-save"></i> Simpan Data
-    </button>
-    <a href="javascript:history.back()" class="back-btn">
-        <i class="fas fa-arrow-left"></i> Kembali
-    </a>
+        <!-- Hidden input untuk menyimpan ID siswa terpilih -->
+        <input type="hidden" name="id_siswa" id="idSiswaTerpilih">
+
+        <div class="button-group">
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-save"></i> Simpan Data
+            </button>
+            
+            <a href="manajemen_data_orangtua.php" class="btn-kembali" title="Kembali">←</a>
+</a>
+
+            </a>
+        </div>
+    </form>
 </div>
 
+<script>
+// Live search siswa
+document.getElementById('cariSiswa').addEventListener('keyup', function() {
+    const keyword = this.value.trim();
+    const hasilDiv = document.getElementById('hasilCari');
 
-        </form>
-    </div>
+    if (keyword.length > 0) {
+        fetch('cari_siswa.php?q=' + encodeURIComponent(keyword))
+        .then(response => response.text())
+        .then(data => {
+            hasilDiv.innerHTML = data;
+            hasilDiv.style.display = 'block';
+        });
+    } else {
+        hasilDiv.innerHTML = '';
+        hasilDiv.style.display = 'none';
+    }
+});
+
+// Ketika memilih siswa dari hasil pencarian
+function pilihSiswa(id, nama) {
+    document.getElementById('cariSiswa').value = nama;
+    document.getElementById('idSiswaTerpilih').value = id;
+    document.getElementById('hasilCari').innerHTML = '';
+}
+</script>
 </body>
 </html>

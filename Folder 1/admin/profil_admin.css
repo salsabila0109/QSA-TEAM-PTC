@@ -1,14 +1,53 @@
+/* === Font & Warna Umum === */
+body, .profil-container, .profil-card, .profil-info, .profil-actions {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Biar background halaman konsisten hijau muda */
+body {
+    background-color: #E0F2F1;
+}
+
+/* Tombol Back (dipakai untuk .btn-back dan .btn-kembali) */
+.btn-back,
+.btn-kembali {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 45px;
+    height: 45px;
+    background-color: #00796B;
+    color: #fff;
+    font-size: 22px;
+    text-decoration: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 999;
+}
+
+.btn-back:hover,
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
 /* Container Profil */
 .profil-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 30px;
+    margin-top: 80px; /* beri jarak supaya tidak ketutup tombol back */
 }
 
 /* Kartu Profil */
 .profil-card {
-    background: #E0F2F1;
+    background: #E0F2F1; /* hijau muda konsisten */
     border-radius: 10px;
     padding: 30px;
     width: 400px;
@@ -45,55 +84,51 @@
     margin-bottom: 20px;
 }
 
-/* Tombol Aksi Profil */
-.profil-actions .btn {
-    display: block;
-    padding: 10px;
-    margin: 8px 0;
+/* Tombol Aksi Profil sejajar */
+.profil-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.profil-actions .btn,
+.profil-actions .btn-logout {
+    padding: 10px 20px;
     border-radius: 6px;
     text-decoration: none;
     font-weight: bold;
     color: #fff;
     transition: 0.3s;
+    cursor: pointer;
+}
+
+/* Tombol Edit Profil */
+.profil-actions .btn {
+    background: #24d700;
+}
+
+.profil-actions .btn:hover {
+    background: #21bd02;
 }
 
 /* Tombol Logout */
-.profil-actions .btn.logout {
-    background: #ff574b;
+.profil-actions .btn-logout {
+    background: #f44336;
 }
 
-.profil-actions .btn.logout:hover {
-    background: #D32F2F;
+.profil-actions .btn-logout:hover {
+    background: #d32f2f;
 }
 
-/* Tombol Lainnya (opsi 1 dan 2) */
-.profil-actions .btn:nth-child(1) {
-    background: #6bd86f;
-}
+/* Responsive */
+@media (max-width: 500px) {
+    .profil-card {
+        width: 90%;
+        padding: 20px;
+    }
 
-.profil-actions .btn:nth-child(1):hover {
-    background: #388E3C;
-}
-
-.profil-actions .btn:nth-child(2) {
-    background: #2ca0ff;
-}
-
-.profil-actions .btn:nth-child(2):hover {
-    background: #1976D2;
-}
-
-/* Bagian Admin Profil */
-.profile-admin {
-    text-align: center;
-    padding: 20px;
-}
-
-.profile-admin .avatar img {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #009688;
-    margin-bottom: 10px;
+    .profil-actions {
+        flex-direction: column;
+    }
 }
