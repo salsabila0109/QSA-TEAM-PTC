@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Orangtua | PresenTech</title>
+
+  <link rel="stylesheet" href="dashboard_orangtua.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><h1>PresenTech</h1></div>
+    <nav class="nav">
+      <a class="active" href="dashboard_orangtua.html">Dashboard</a>
+      <a href="profil_orangtua.php">Profil</a>
+      <a href="logout.php" onclick="return confirm('Apakah Anda yakin ingin logout?')">Logout</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <h2 id="haloText">Halo, Orangtua 👋</h2>
+    </header>
+
+    <section class="panel">
+      <header class="panel-header"><strong>Riwayat Absensi Anak Saya</strong></header>
+
+      <p id="anakInfo">
+        <strong>ID Siswa:</strong> - | <strong>Nama Siswa:</strong> -
+      </p>
+
+      <label for="tgl">Tanggal:</label>
+      <input type="date" id="tgl" name="tgl">
+
+      <div class="chart-container">
+        <canvas id="absensiChart"></canvas>
+      </div>
+
+      <!-- Notifikasi Hari Ini -->
+      <div id="notifikasi-hari-ini" class="notif-hari-ini" style="display:none;">
+        <h4>🔔 Notifikasi hari ini</h4>
+        <table class="table notif-table">
+          <thead>
+          <tr>
+            <th>Tanggal &amp; Jam</th>
+            <th>Kelas</th>
+            <th>Mata Pelajaran</th>
+            <th>Status</th>
+          </tr>
+          </thead>
+          <tbody id="notif-tbody"></tbody>
+        </table>
+        <p class="pindahkan" onclick="pindahkanKeTabel()">Klik di sini untuk pindahkan ke riwayat tabel</p>
+      </div>
+
+      <div class="table-wrap" id="table-wrap">
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Tanggal &amp; Jam</th>
+            <th>Kelas</th>
+            <th>Mata Pelajaran</th>
+            <th>Status</th>
+          </tr>
+          </thead>
+          <tbody id="tabel-utama">
+          <tr><td colspan="4">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  // ====== FIREBASE CONFIG ======
+  const firebaseConfig = {
+    apiKey: "AIzaSyCuayRKFrLjWaVcrWBeWZjmA4V_CWPtPcU",
+    authDomain: "presentech-4c4c0.firebaseapp.com",
+    databaseURL: "https://presentech-4c4c0-default-rtdb.firebaseio.com",
+    projectId: "presentech-4c4c0",
+    storageBucket: "presentech-4c4c0.appspot.com",
+    messagingSenderId: "255263820694",
+    appId: "1:255263820694:web:c7dd9f18b5b529cf67abb7"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  // ====== DOM ======
+  const haloText   = document.getElementById("haloText");
+  const anakInfo   = document.getElementById("anakInfo");
+  const tglInput   = document.getElementById("tgl");
+  const notifBox   = document.getElementById("notifikasi-hari-ini");
+  const notifTbody = document.getElementById("notif-tbody");
+  const mainTbody  = document.getElementById("tabel-utama");
+
+  // ====== STATE ======
+  let profile = { nama_pengguna: "Orangtua", anak_id: null, nama_siswa: "" };
+  let child   = { idSiswa: null, fingerId: null, nama: "", kelas: "" };
+  let siswaKelas = {};     // optional: id_siswa -> nama_kelas (MySQL)
+  let attendanceData = {}; // /attendance
+
+  // ====== NEW: READ STATE (localStorage) ======
+  let readMap = {}; // { [recordId]: true }
+
+  function readKey() {
+    const id = child.idSiswa ? String(child.idSiswa) : "unknown";
+    return `presentech_read_notif_${id}`;
+  }
+
+  function loadReadMap() {
+    try {
+      const raw = localStorage.getItem(readKey());
+      readMap = raw ? JSON.parse(raw) : {};
+      if (!readMap || typeof readMap !== "object") readMap = {};
+    } catch (_) {
+      readMap = {};
+    }
+  }
+
+  function saveReadMap() {
+    try { localStorage.setItem(readKey(), JSON.stringify(readMap)); } catch (_) {}
+  }
+
+  function isRead(recordId) {
+    return !!readMap[String(recordId)];
+  }
+
+  function markRead(recordIds) {
+    (recordIds || []).forEach((id) => { readMap[String(id)] = true; });
+    saveReadMap();
+  }
+
+  // ====== Helpers ======
+  function norm(v){ return String(v || "").trim(); }
+  function upper(v){ return norm(v).toUpperCase(); }
+
+  function getTodayString() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function parseDateKeyToISO(keyRaw) {
+    const key = norm(keyRaw);
+    if (!key) return null;
+    const k10 = key.length >= 10 ? key.slice(0, 10) : key;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(k10)) return k10;                        // YYYY-MM-DD
+    if (/^\d{4}\/\d{2}\/\d{2}$/.test(k10)) return k10.replaceAll("/", "-"); // YYYY/MM/DD
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(k10)) {                                // DD/MM/YYYY
+      const [dd, mm, yyyy] = k10.split("/");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    if (/^\d{2}-\d{2}-\d{4}$/.test(k10)) {                                  // DD-MM-YYYY
+      const [dd, mm, yyyy] = k10.split("-");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    return null;
+  }
+
+  function formatStatusLabel(raw) {
+    const s = String(raw || "").toLowerCase();
+    if (!s) return "-";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function getFingerprintNode(perTanggal) {
+    if (!perTanggal || typeof perTanggal !== "object") return {};
+    if (perTanggal.fingerprint && typeof perTanggal.fingerprint === "object") return perTanggal.fingerprint;
+
+    const clone = { ...perTanggal };
+    delete clone.fingerprint;
+    delete clone.rfid;
+    return clone;
+  }
+
+  function getRfidNode(perTanggal) {
+    if (!perTanggal || typeof perTanggal !== "object") return {};
+    if (perTanggal.rfid && typeof perTanggal.rfid === "object") return perTanggal.rfid;
+    return {};
+  }
+
+  function getKelasFromAny(item) {
+    const kelasPhp = child.idSiswa ? (siswaKelas[String(child.idSiswa)] || "") : "";
+    return norm(kelasPhp || item?.kelas || item?.nama_kelas || child.kelas || "");
+  }
+
+  function isThisChild(item) {
+    if (!item || typeof item !== "object") return false;
+
+    const idItem = item.id_siswa ?? item.idSiswa ?? item.student_id ?? "";
+    if (child.idSiswa && norm(idItem) && String(idItem) === String(child.idSiswa)) return true;
+
+    const fidItem = item.finger_id ?? item.fingerID ?? item.fingerId ?? "";
+    if (child.fingerId && norm(fidItem) && String(fidItem) === String(child.fingerId)) return true;
+
+    return false;
+  }
+
+  function tanggalKeyToDisplay(tanggalKey, item) {
+    const iso = parseDateKeyToISO(tanggalKey) || norm(tanggalKey);
+    const jam = norm(item?.time || item?.jam || "");
+
+    const ts = item?.timestamp;
+    if (!jam && ts && !Number.isNaN(Number(ts))) {
+      try {
+        const d = new Date(Number(ts));
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return `${iso} ${hh}:${mm}:${ss}`;
+      } catch (_) {}
+    }
+    return jam ? `${iso} ${jam}` : iso;
+  }
+
+  function collectChildRecords() {
+    const rows = [];
+
+    function pushRow(source, tanggalKey, recKey, item) {
+      const mapel = norm(item.mapel);
+      if (upper(mapel) === "RFID LOGIN") return;
+
+      const isoDate   = parseDateKeyToISO(tanggalKey) || "";
+      const displayDT = tanggalKeyToDisplay(tanggalKey, item);
+      const statusRaw = String(item.status || "hadir").toLowerCase();
+      const kelas     = getKelasFromAny(item);
+
+      // ====== NEW: ID unik untuk “dibaca” ======
+      const dateId = isoDate || norm(tanggalKey) || "-";
+      const recordId = `${dateId}|${source}|${recKey}`;
+
+      rows.push({
+        id: recordId,
+        isoDate,
+        displayDT,
+        kelas: kelas || "-",
+        mapel: mapel || "-",
+        statusRaw,
+        statusLabel: formatStatusLabel(statusRaw)
+      });
+    }
+
+    Object.entries(attendanceData || {}).forEach(([tanggalKey, perTanggal]) => {
+      const fpNode   = getFingerprintNode(perTanggal);
+      const rfidNode = getRfidNode(perTanggal);
+
+      if (fpNode && typeof fpNode === "object") {
+        Object.entries(fpNode).forEach(([recKey, item]) => {
+          if (!item || typeof item !== "object") return;
+          if (!isThisChild(item)) return;
+          pushRow("fp", tanggalKey, recKey, item);
+        });
+      }
+
+      if (rfidNode && typeof rfidNode === "object") {
+        Object.entries(rfidNode).forEach(([recKey, item]) => {
+          if (!item || typeof item !== "object") return;
+          if (!isThisChild(item)) return;
+          pushRow("rfid", tanggalKey, recKey, item);
+        });
+      }
+    });
+
+    rows.sort((a, b) => (b.displayDT || "").localeCompare(a.displayDT || ""));
+    return rows;
+  }
+
+  // ====== Chart ======
+  let absensiChart = null;
+
+  function initChart() {
+    const ctx = document.getElementById("absensiChart").getContext("2d");
+    absensiChart = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: ["Hadir","Izin","Sakit","Alpa"],
+        datasets: [{
+          data: [0,0,0,0],
+          backgroundColor: ["#4CAF50","#FF9800","#2196F3","#F44336"]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom" } }
+      }
+    });
+  }
+
+  function updateChart(records, selectedDateISO) {
+    const counts = { hadir:0, izin:0, sakit:0, alpa:0 };
+
+    records.forEach(r => {
+      if (!selectedDateISO) return;
+      if (r.isoDate !== selectedDateISO) return;
+      const k = String(r.statusRaw || "").toLowerCase();
+      if (counts[k] !== undefined) counts[k] += 1;
+    });
+
+    absensiChart.data.datasets[0].data = [counts.hadir, counts.izin, counts.sakit, counts.alpa];
+    absensiChart.update();
+  }
+
+  // ====== TABLE RENDER (dengan read/unread) ======
+  function renderTables(records, selectedDateISO) {
+    const todayISO  = getTodayString();
+    const targetISO = norm(selectedDateISO) || todayISO;
+
+    // hanya data sesuai tanggal yang dipilih
+    const filtered = records.filter(r => r.isoDate === targetISO);
+
+    // kalau pilih hari ini: pisah unread (merah) vs read (riwayat bawah)
+    if (targetISO === todayISO) {
+      const unread = filtered.filter(r => !isRead(r.id));
+      const read   = filtered.filter(r =>  isRead(r.id));
+
+      if (unread.length > 0) {
+        notifBox.style.display = "block";
+        notifTbody.innerHTML = unread.map(r => `
+          <tr data-record-id="${r.id}">
+            <td>${r.displayDT}</td>
+            <td>${r.kelas}</td>
+            <td>${r.mapel}</td>
+            <td>${r.statusLabel}</td>
+          </tr>
+        `).join("");
+      } else {
+        notifBox.style.display = "none";
+        notifTbody.innerHTML = "";
+      }
+
+      if (read.length > 0) {
+        mainTbody.innerHTML = read.map(r => `
+          <tr>
+            <td>${r.displayDT}</td>
+            <td>${r.kelas}</td>
+            <td>${r.mapel}</td>
+            <td>${r.statusLabel}</td>
+          </tr>
+        `).join("");
+      } else {
+        mainTbody.innerHTML = `<tr><td colspan="4">Belum ada riwayat (yang sudah dibaca) untuk tanggal ${todayISO}.</td></tr>`;
+      }
+
+      // kalau benar-benar kosong semua
+      if (filtered.length === 0) {
+        notifBox.style.display = "none";
+        notifTbody.innerHTML = "";
+        mainTbody.innerHTML = `<tr><td colspan="4">Belum ada data absensi anak Anda pada tanggal ${todayISO}.</td></tr>`;
+      }
+      return;
+    }
+
+    // kalau tanggal selain hari ini: tampilkan normal di tabel utama
+    notifBox.style.display = "none";
+    notifTbody.innerHTML = "";
+
+    if (filtered.length > 0) {
+      mainTbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td>${r.displayDT}</td>
+          <td>${r.kelas}</td>
+          <td>${r.mapel}</td>
+          <td>${r.statusLabel}</td>
+        </tr>
+      `).join("");
+    } else {
+      mainTbody.innerHTML = `<tr><td colspan="4">Belum ada data absensi anak Anda pada tanggal ${targetISO}.</td></tr>`;
+    }
+  }
+
+  // ====== NEW: pindahkan = tandai “dibaca”, lalu render ulang ======
+  window.pindahkanKeTabel = function() {
+    const ids = Array.from(notifTbody.querySelectorAll("tr"))
+      .map(tr => tr.getAttribute("data-record-id"))
+      .filter(Boolean);
+
+    if (ids.length > 0) {
+      markRead(ids);
+    }
+
+    // rerender pakai data terakhir
+    const records = collectChildRecords();
+    const selectedDate = norm(tglInput.value) || getTodayString();
+    renderTables(records, selectedDate);
+    updateChart(records, selectedDate);
+  };
+
+  // ====== Profile: ambil dari session MySQL lewat API ======
+  async function fetchProfileFromMySQL() {
+    const res = await fetch("api_orangtua.php", { credentials: "include" });
+    if (!res.ok) {
+      window.location.href = "../login.php";
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.success) {
+      window.location.href = "../login.php";
+      return;
+    }
+
+    profile = data;
+    child.idSiswa = profile.anak_id;
+    child.kelas = profile.nama_kelas || "";
+
+    // ====== NEW: load readMap setelah anak_id sudah ada ======
+    loadReadMap();
+
+    haloText.textContent = `Halo, ${profile.nama_pengguna || "Orangtua"} 👋`;
+    anakInfo.innerHTML = `<strong>ID Siswa:</strong> ${profile.anak_id ?? "-"} | <strong>Nama Siswa:</strong> ${profile.nama_siswa || "-"}`;
+  }
+
+  async function loadKelasMapFromPHP() {
+    try {
+      const res = await fetch("../api_kelas_siswa.php", { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.success) return;
+      siswaKelas = (data.siswa_kelas && typeof data.siswa_kelas === "object") ? data.siswa_kelas : {};
+    } catch (_) {}
+  }
+
+  function listenChildFromFirebase() {
+    const studentsRef = ref(db, "students");
+    onValue(studentsRef, (snap) => {
+      const val = snap.val() || {};
+      const anakId = child.idSiswa ? String(child.idSiswa) : null;
+      if (!anakId) return;
+
+      const obj = val[anakId];
+      if (!obj) return;
+
+      child.fingerId = obj.finger_id ?? obj.fingerID ?? obj.fingerId ?? null;
+      child.nama = obj.nama || obj.nama_siswa || child.nama || "";
+      child.kelas = obj.kelas || child.kelas || "";
+
+      const namaShown = profile.nama_siswa || child.nama || "-";
+      anakInfo.innerHTML = `<strong>ID Siswa:</strong> ${anakId} | <strong>Nama Siswa:</strong> ${namaShown}`;
+    }, (err) => console.error("students read error:", err));
+  }
+
+  function listenAttendance() {
+    const attendanceRef = ref(db, "attendance");
+    onValue(attendanceRef, (snap) => {
+      attendanceData = snap.val() || {};
+
+      const records = collectChildRecords();
+      const selectedDate = norm(tglInput.value);
+
+      renderTables(records, selectedDate);
+      updateChart(records, selectedDate);
+    }, (err) => console.error("attendance read error:", err));
+  }
+
+  function initTanggalFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const qTgl = params.get("tgl");
+    tglInput.value = qTgl && /^\d{4}-\d{2}-\d{2}$/.test(qTgl) ? qTgl : getTodayString();
+
+    tglInput.addEventListener("change", () => {
+      const v = tglInput.value;
+      const url = new URL(window.location.href);
+      url.searchParams.set("tgl", v);
+      window.location.href = url.toString();
+    });
+  }
+
+  // ====== BOOT ======
+  initChart();
+  initTanggalFromQuery();
+
+  signInAnonymously(auth).catch((err) => {
+    console.error("Anonymous sign-in failed:", err.code, err.message);
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+
+    await fetchProfileFromMySQL();
+    await loadKelasMapFromPHP();
+    listenChildFromFirebase();
+    listenAttendance();
+  });
+</script>
+</body>
+</html>

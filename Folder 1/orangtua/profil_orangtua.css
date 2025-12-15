@@ -1,0 +1,228 @@
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #E0F2F1; /* hijau muda */
+    color: #333;
+    padding: 20px;
+}
+
+/* ===== WRAPPER AGAR TIDAK TERLALU LEBAR (RAPI) ===== */
+.container {
+    width: 100%;
+    max-width: 980px;        /* batasi lebar biar tidak “melebar banget” */
+    margin: 0 auto;          /* center */
+    padding: 0 12px;         /* aman di HP */
+}
+
+.container h2 {
+    text-align: center;
+    margin-bottom: 26px;     /* jarak ke card */
+    font-size: 35px;
+    line-height: 1.2;
+}
+
+/* Tombol Back */
+.btn-back {
+    display: inline-flex;     /* biar icon/button stabil */
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    width: 44px;
+    height: 44px;
+    background-color: #004D40; /* teal */
+    color: #fff;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 16px;
+    transition: background 0.3s, transform 0.2s;
+}
+.btn-back:hover {
+    background-color: #009688;
+    transform: scale(1.05);
+}
+
+/* Cards */
+.card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: #004D40;
+    color: #fff;
+    padding: 12px 16px;
+    font-size: 22px;          /* sebelumnya 27px, terlalu besar untuk HP */
+    text-align: center;
+    line-height: 1.25;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+/* Form Inputs */
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+button.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button.btn-primary {
+    display: block;
+    margin: 16px auto 0;
+    background-color: #009688;
+    color: #fff;
+    width: 100%;
+    max-width: 260px;         /* biar tombol tidak terlalu panjang */
+}
+
+/* Foto Profil */
+.foto-wrapper {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.foto-profil {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #009688;
+}
+
+/* Card Profil Compact */
+.profil-card {
+    background-color: #fff;
+    padding: 18px 16px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+
+    width: 100%;
+    max-width: 360px;          /* lebih “masuk akal” dari 230px, tetap tidak lebar */
+    margin: 0 auto;            /* center di kolom */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Alert */
+.alert {
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* ===== LAYOUT ROW/COL: RESPONSIF ===== */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: flex-start;
+    justify-content: center; /* biar rapi saat kolom 1 */
+}
+
+.col-lg-6 {
+    flex: 1 1 420px;          /* default: 2 kolom saat cukup lebar */
+    min-width: 300px;
+    max-width: 480px;         /* batasi biar tidak terlalu lebar */
+}
+
+/* ===== RESPONSIVE HP ===== */
+@media (max-width: 768px) {
+    body {
+        padding: 14px;
+    }
+
+    .container {
+        padding: 0 10px;
+    }
+
+    .container h2 {
+        font-size: 24px;
+        margin-bottom: 18px;
+    }
+
+    .card-header {
+        font-size: 18px;
+        padding: 10px 12px;
+    }
+
+    .card-body {
+        padding: 14px;
+    }
+
+    .row {
+        gap: 14px;
+    }
+
+    .col-lg-6 {
+        flex: 1 1 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .profil-card {
+        max-width: 100%;
+        padding: 16px 14px;
+    }
+
+    .foto-profil {
+        width: 84px;
+        height: 84px;
+    }
+
+    button.btn-primary {
+        max-width: 100%;
+    }
+}
+
+/* ===== RESPONSIVE LAYAR SANGAT KECIL ===== */
+@media (max-width: 420px) {
+    .btn-back {
+        width: 42px;
+        height: 42px;
+        font-size: 15px;
+    }
+
+    .form-control {
+        font-size: 13px;
+        padding: 9px 10px;
+    }
+
+    button.btn {
+        font-size: 13px;
+        padding: 9px 14px;
+    }
+}

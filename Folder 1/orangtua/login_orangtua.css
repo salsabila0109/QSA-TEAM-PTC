@@ -1,0 +1,130 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #E0F2F1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-wrapper {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+    max-width: 380px;
+    width: 92%;
+}
+
+.login-card h2 {
+    color: #004D40;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #d0d0d0;
+    font-size: 14px;
+    background: #fff;
+    outline: none;
+    transition: box-shadow .12s ease;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 3px rgba(0,150,136,0.08);
+    border-color: #009688;
+}
+
+/* ===== Password wrapper + ikon mata (model ubah_password.css) ===== */
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper .form-control {
+    padding-right: 44px; /* ruang kanan untuk icon mata */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.toggle-password:hover {
+    color: #000;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background-color: #009688;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color .18s ease, transform .06s ease;
+}
+
+.btn:hover {
+    background-color: #00796b;
+    transform: translateY(-1px);
+}
+
+.alert {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Tombol Kembali */
+.btn-kembali {
+    position: fixed;
+    top: 18px;
+    left: 20px;
+    background-color: #00796B;
+    color: white;
+    font-size: 22px;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+    z-index: 999;
+}
+
+.btn-kembali:hover {
+    background-color: #03aa8e;
+    transform: scale(1.08);
+}
+
+@media (max-width: 360px) {
+    .login-wrapper { padding: 14px; }
+    .login-card h2 { font-size: 20px; }
+    .form-control { padding: 10px; }
+}
