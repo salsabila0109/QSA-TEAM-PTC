@@ -11,8 +11,8 @@
 #include <HardwareSerial.h>
 
 // ====================== WIFI ======================
-const char* WIFI_SSID = "Saya Sappol";
-const char* WIFI_PASS = "kambingcoklatsaja";
+const char* WIFI_SSID = "aa";
+const char* WIFI_PASS = "abcdefgh";
 
 // ====================== FIREBASE ======================
 // Proyek: presentech-4c4c0
@@ -105,7 +105,10 @@ void showWelcomeMessage(const String &namaSiswa) {
 
   String nama = namaSiswa;
   nama.trim();
-  if (nama.length() == 0) nama = "Siswa";
+
+  // kalau nama kosong atau placeholder "siswa" => fallback
+  String low = nama; low.toLowerCase();
+  if (nama.length() == 0 || low == "siswa") nama = "Siswa";
 
   String msg = "selamat datang " + nama;
   scrollLine(0, msg, SCROLL_DELAY_MS);
@@ -168,7 +171,7 @@ bool pushRFIDToFirebase(String uid, String mapel) {
   return ok;
 }
 
-// ✅ Perbaikan: simpan juga id_siswa biar web tidak bingung
+// ✅ simpan juga id_siswa biar web tidak bingung
 bool pushFingerprintToFirebase(int fingerID, const String &idSiswa, const String &siswa) {
   FirebaseJson json;
   json.set("finger_id", fingerID);
@@ -178,8 +181,7 @@ bool pushFingerprintToFirebase(int fingerID, const String &idSiswa, const String
   json.set("time", currentTimeStr());
   json.set("timestamp", (int)currentEpoch());
 
-  // key unik (lebih aman tambahkan millis agar tidak nabrak dalam 1 detik)
-  String uniqueKey = String(currentEpoch()) + "" + String(fingerID) + "" + String(millis() % 1000);
+  String uniqueKey = String(currentEpoch()) + "_" + String(fingerID) + "_" + String(millis() % 1000);
   String path = "/attendance/" + currentDateStr() + "/fingerprint/" + uniqueKey;
 
   bool ok = Firebase.RTDB.setJSON(&fbdo, path.c_str(), &json);
@@ -187,6 +189,28 @@ bool pushFingerprintToFirebase(int fingerID, const String &idSiswa, const String
   Serial.println(ok ? " [OK]" : " [GAGAL]");
   if (!ok) Serial.println(fbdo.errorReason());
   return ok;
+}
+
+// ====================== RESOLVE (INDEX RINGAN) ======================
+// /students_by_finger/<fingerID> -> { id_siswa:"202543", nama:"Izza Irena", ... }
+bool resolveStudentFromIndex(int fingerID, String &outIdSiswa, String &outNama) {
+  outIdSiswa = "";
+  outNama    = "";
+
+  String path = "/students_by_finger/" + String(fingerID);
+  if (!Firebase.RTDB.getJSON(&fbdo, path.c_str())) {
+    Serial.print("Index GET fail: ");
+    Serial.println(fbdo.errorReason());
+    return false;
+  }
+
+  FirebaseJson &j = fbdo.jsonObject();
+  FirebaseJsonData d;
+
+  if (j.get(d, "id_siswa")) { outIdSiswa = d.stringValue; outIdSiswa.trim(); }
+  if (j.get(d, "nama"))     { outNama   = d.stringValue; outNama.trim(); }
+
+  return (outIdSiswa.length() > 0 || outNama.length() > 0);
 }
 
 // ====================== HELPER JSON (lebih toleran field) ======================
@@ -232,23 +256,20 @@ bool parseJsonValueToChild(String v, FirebaseJson &child) {
 }
 
 // ====================== Ambil siswa dari Firebase (ID + Nama) ======================
+// (ini fungsi lama kamu — TETAP ADA sebagai fallback)
 bool resolveStudentFromFirebase(int fingerID, String &outIdSiswa, String &outNama) {
   outIdSiswa = "";
   outNama = "";
 
   Serial.print("Resolving fingerID = "); Serial.println(fingerID);
 
-  // ====== PERUBAHAN MINIMAL (1): tambah key name & id yang umum ======
-  // (biar nama tidak lagi kosong kalau di DB pakai "siswa" atau "nama_siswa")
-  const char* const NAME_KEYS[] = {"nama", "nama_siswa", "name", "siswa"}; // << ADDED "siswa"
-  const char* const ID_KEYS[]   = {"id_siswa", "idSiswa", "nis", "student_id", "studentId"}; // << ADDED
+  const char* const NAME_KEYS[] = {"nama", "nama_siswa", "name", "siswa"};
+  const char* const ID_KEYS[]   = {"id_siswa", "idSiswa", "nis", "student_id", "studentId"};
   const char* const FID_KEYS[]  = {
     "finger_id", "fingerID", "fingerId", "slot",
     "finger", "fid", "id_finger", "fingerprint_id", "fingerprintId"
-  }; // << lebih toleran
+  };
 
-  // ====== PERUBAHAN MINIMAL (2): coba cepat /students/<fingerID> ======
-  // (kalau struktur DB kamu pakai fingerID sebagai key)
   {
     String directPath = "/students/" + String(fingerID);
     if (Firebase.RTDB.getJSON(&fbdo, directPath.c_str())) {
@@ -264,7 +285,6 @@ bool resolveStudentFromFirebase(int fingerID, String &outIdSiswa, String &outNam
       if (gotNamaD) {
         outNama = namaDirect;
         outIdSiswa = gotIdD ? idDirect : String(fingerID);
-        // kalau ada fid, bagus; kalau tidak ada, tetap OK karena pathnya sudah spesifik
         Serial.print("Direct hit "); Serial.print(directPath);
         Serial.print(" | id="); Serial.print(outIdSiswa);
         Serial.print(" | nama="); Serial.println(outNama);
@@ -273,7 +293,6 @@ bool resolveStudentFromFirebase(int fingerID, String &outIdSiswa, String &outNam
     }
   }
 
-  // Ambil JSON di /students
   if (!Firebase.RTDB.getJSON(&fbdo, "/students")) {
     Serial.print("Gagal get /students: ");
     Serial.println(fbdo.errorReason());
@@ -282,7 +301,6 @@ bool resolveStudentFromFirebase(int fingerID, String &outIdSiswa, String &outNam
 
   FirebaseJson &root = fbdo.jsonObject();
 
-  // ----- CASE A: /students langsung 1 siswa -----
   String namaRoot = "";
   String idRoot   = "";
   int fidRoot = -999;
@@ -302,7 +320,6 @@ bool resolveStudentFromFirebase(int fingerID, String &outIdSiswa, String &outNam
     }
   }
 
-  // ----- CASE B: /students banyak anak (key = id_siswa) -----
   size_t count = root.iteratorBegin();
   if (count == 0) {
     Serial.println("Tidak ada data di /students (iterator kosong).");
@@ -319,10 +336,7 @@ bool resolveStudentFromFirebase(int fingerID, String &outIdSiswa, String &outNam
     FirebaseJson child;
     bool parsed = parseJsonValueToChild(value, child);
 
-    if (!parsed) {
-      // value bukan JSON object -> skip (biar aman)
-      continue;
-    }
+    if (!parsed) continue;
 
     String nama = "";
     String idFromField = "";
@@ -337,7 +351,6 @@ bool resolveStudentFromFirebase(int fingerID, String &outIdSiswa, String &outNam
     Serial.print(" | nama="); Serial.println(okNama ? nama : "(kosong)");
 
     if (okFid && fid == fingerID) {
-      // id siswa prioritas: keyStr (umumnya 2025xxxx), kalau kosong pakai field (nis), kalau tetap kosong pakai fingerID
       outIdSiswa = (keyStr.length() > 0) ? keyStr : (okId ? idFromField : String(fingerID));
       outNama = okNama ? nama : "";
       found = true;
@@ -398,6 +411,10 @@ void setupTime() {
 void setupFirebase() {
   config.api_key      = FIREBASE_API_KEY;
   config.database_url = FIREBASE_DB_URL;
+
+  // ---- tambahan kecil untuk stabilitas SSL/RTDB ----
+  fbdo.setBSSLBufferSize(4096, 1024);
+  fbdo.setResponseSize(2048);
 
   if (!Firebase.signUp(&config, &auth, "", "")) {
     Serial.print("Firebase signUp error: ");
@@ -523,18 +540,27 @@ void loop() {
           Serial.print("Finger terdeteksi, ID: ");
           Serial.println(fingerID);
 
-          // ✅ ambil id_siswa + nama
           String idSiswa, studentName;
-          bool found = resolveStudentFromFirebase(fingerID, idSiswa, studentName);
+
+          // 1) Coba index ringan dulu (paling stabil untuk LCD)
+          bool found = resolveStudentFromIndex(fingerID, idSiswa, studentName);
+
+          // 2) Kalau index belum ada / gagal, fallback ke resolver lama kamu
+          if (!found || studentName.length() == 0) {
+            found = resolveStudentFromFirebase(fingerID, idSiswa, studentName);
+          }
 
           // retry cepat 1x (kadang jaringan)
           if (!found || studentName.length() == 0) {
             delay(150);
-            found = resolveStudentFromFirebase(fingerID, idSiswa, studentName);
+            bool found2 = resolveStudentFromIndex(fingerID, idSiswa, studentName);
+            if (!found2) found2 = resolveStudentFromFirebase(fingerID, idSiswa, studentName);
+            found = found2;
           }
 
-          if (studentName.length() == 0) {
-            // jika masih kosong, coba tampilkan idSiswa bila ada, atau default "Siswa"
+          studentName.trim();
+          String low = studentName; low.toLowerCase();
+          if (studentName.length() == 0 || low == "siswa") {
             if (idSiswa.length() > 0) studentName = String("ID: ") + idSiswa;
             else studentName = "Siswa";
           }
@@ -543,10 +569,8 @@ void loop() {
           digitalWrite(LED_RED,   LOW);
           beepSuccess();
 
-          // ✅ LCD tampil nama siswa (yang diambil dari DB)
           showWelcomeMessage(studentName);
 
-          // ✅ Simpan juga id_siswa
           pushFingerprintToFirebase(fingerID, idSiswa, studentName);
 
           delay(DELAY_OK_MS);
